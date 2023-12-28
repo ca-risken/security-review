@@ -1,3 +1,5 @@
+TAG ?= latest
+
 .PHONY: all
 all: help
 
@@ -9,11 +11,11 @@ help:
 
 .PHONY: build
 build:
-	docker build -t risken-review:latest .
+	docker build -t ssgca/risken-review:$(TAG) .
 
 .PHONY: sh
 sh: build
-	docker run -it --rm -v $(CURDIR):/tmp/workspace --entrypoint /bin/sh risken-review:latest
+	docker run -it --rm -v $(CURDIR):/tmp/workspace --entrypoint /bin/sh ssgca/risken-review:$(TAG)
 
 .PHONY: run
 run: build
@@ -21,4 +23,18 @@ run: build
 		--rm \
 		--env-file=.env \
 		-v $(CURDIR):/tmp/workspace \
-		risken-review:latest
+		ssgca/risken-review:$(TAG)
+
+.PHONY: login
+login:
+	docker login
+
+.PHONY: start-buildx
+start-buildx:
+	docker buildx create --name mybuilder --use
+	docker buildx inspect --bootstrap
+
+# start-buildxが実行されていること
+.PHONY: push
+push:
+	docker buildx build --platform linux/amd64,linux/arm64 -t ssgca/security-review:$(TAG) . --push

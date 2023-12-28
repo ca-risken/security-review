@@ -59,3 +59,10 @@ $ make run
 ### See your comment
 
 https://github.com/ca-risken/security-review/pull/1
+
+## Push image
+
+```shell
+$ make push TAG=v1
+```
+
