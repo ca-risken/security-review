@@ -25,3 +25,7 @@ func osCmdInjection(userInput string) error {
 	cmd.Stderr = os.Stdout
 	return cmd.Run()
 }
+
+const (
+	TEST_SECRET_KEY = "AKIAIMNOJVGFDXXXE4OA" // aws test key. https://github.com/gitleaks/gitleaks
+)
