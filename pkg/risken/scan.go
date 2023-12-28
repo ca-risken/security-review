@@ -19,10 +19,26 @@ type Scanner interface {
 	Scan(ctx context.Context, repositoryURL, sourceCodePath string, changeFiles []*github.CommitFile) ([]*ScanResult, error)
 }
 
-func isChangeLine(files []*github.CommitFile, line string) bool {
+func isChangeLine(files []*github.CommitFile, fileName, line string) bool {
 	for _, f := range files {
-		if strings.Contains(*f.Patch, line) {
+		if *f.Filename != fileName {
+			continue
+		}
+		if isLineInDiff(f, line) {
 			return true
+		}
+	}
+	return false
+}
+
+func isLineInDiff(file *github.CommitFile, line string) bool {
+	patchLines := strings.Split(file.GetPatch(), "\n")
+	for _, patchLine := range patchLines {
+		// "+" で始まる行は追加された行を示します。
+		if strings.HasPrefix(patchLine, "+") {
+			if strings.Contains(patchLine, line) {
+				return true
+			}
 		}
 	}
 	return false
