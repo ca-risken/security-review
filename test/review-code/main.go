@@ -27,5 +27,5 @@ func osCmdInjection(userInput string) error {
 }
 
 const (
-	TEST_SECRET_KEY = "AKIAIMNOJVGFDXXXE4OA" // test aws key. https://github.com/gitleaks/gitleaks
+	TEST_SECRET_KEY = "AKIAIMNOJVGFDXXXE4OA" //  test aws key. https://github.com/gitleaks/gitleaks
 )
