@@ -62,6 +62,7 @@ func (r *riskenService) PullRequestComment(ctx context.Context, pr *GithubPREven
 			return fmt.Errorf("failed to get all issue comments: err=%w", err)
 		}
 		if existsSimilarIssueComment(comments, "特に問題は見つかりませんでした") {
+			r.logger.WarnContext(ctx, "already exists similar issue comment")
 			return nil
 		}
 
