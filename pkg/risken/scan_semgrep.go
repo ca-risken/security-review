@@ -62,10 +62,11 @@ func parseSemgrepResult(sourceCodePath, scanResult string, changeFiles []*github
 	}
 	findings := make([]*semgrepFinding, 0, len(results.Results))
 	for _, r := range results.Results {
-		if !isChangeLine(changeFiles, r.Extra.Lines) {
+		fileName := strings.ReplaceAll(r.Path, sourceCodePath+"/", "") // remove dir prefix
+		if !isChangeLine(changeFiles, fileName, r.Extra.Lines) {
 			continue
 		}
-		r.Path = strings.ReplaceAll(r.Path, sourceCodePath+"/", "") // remove dir prefix
+		r.Path = fileName
 		findings = append(findings, r)
 	}
 	return findings, nil
