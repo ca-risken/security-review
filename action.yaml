@@ -21,7 +21,7 @@ inputs:
     default: ""
 runs:
   using: "docker"
-  image: "Dockerfile"
+  image: "ssgca/security-review:v1.0.3"
   args:
     - "--github-event-path"
     - ${{ inputs.github_event_path}}
