@@ -50,10 +50,18 @@ func (r *riskenService) GetGithubPREvent() (*GithubPREvent, error) {
 	return &event, nil
 }
 
+const (
+	NO_REVIEW_COMMENT = "セキュリティレビューを実施しました。\n特に問題は見つかりませんでした👏\n\n_By RISKEN review_"
+)
+
 func (r *riskenService) PullRequestComment(ctx context.Context, pr *GithubPREvent, scanResults []*ScanResult) error {
-	if len(scanResults) == 0 {
+	comments, err := r.getAllComments(ctx, pr.Owner, pr.RepoName, pr.Number)
+	if err != nil {
+		return fmt.Errorf("failed to get all comments: err=%w", err)
+	}
+	if len(scanResults) == 0 && existsSimilarComment(comments, NO_REVIEW_COMMENT) {
 		comment := &github.IssueComment{
-			Body: github.String("セキュリティレビューを実施しました。\n特に問題は見つかりませんでした👏\n\n_By RISKEN review_"),
+			Body: github.String(NO_REVIEW_COMMENT),
 		}
 		_, _, err := r.githubClient.Issues.CreateComment(ctx, pr.Owner, pr.RepoName, pr.Number, comment)
 		if err != nil {
@@ -63,10 +71,6 @@ func (r *riskenService) PullRequestComment(ctx context.Context, pr *GithubPREven
 	}
 
 	// Review Comment
-	comments, err := r.getAllComments(ctx, pr.Owner, pr.RepoName, pr.Number)
-	if err != nil {
-		return fmt.Errorf("failed to get all comments: err=%w", err)
-	}
 	for _, result := range scanResults {
 		if existsSimilarComment(comments, result.ScanID) {
 			r.logger.WarnContext(ctx, "already exists similar comment", slog.String("file", result.File), slog.Int("line", result.Line), slog.String("ID", result.ScanID))
