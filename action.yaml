@@ -16,8 +16,8 @@ inputs:
   risken_endpoint:
     description: "Endpoint of the RISKEN API"
     default: ""
-  api_token:
-    description: "API token of the RISKEN API"
+  risken_api_token:
+    description: "RISKEN API token"
     default: ""
 runs:
   using: "docker"
@@ -31,5 +31,5 @@ runs:
     - ${{ inputs.source_code_path}}
     - "--risken-endpoint"
     - ${{ inputs.risken_endpoint}}
-    - "--api-token"
-    - ${{ inputs.api_token}}
+    - "--risken-api-token"
+    - ${{ inputs.risken_api_token}}
