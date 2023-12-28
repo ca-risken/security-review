@@ -9,8 +9,8 @@ inputs:
     description: "GitHub token"
     required: true
     default: ""
-  source_code_path:
-    description: "SourceCode path"
+  github_workspace:
+    description: "GitHub workspace"
     required: true
     default: ""
   risken_endpoint:
@@ -27,8 +27,8 @@ runs:
     - ${{ inputs.github_event_path}}
     - "--github-token"
     - ${{ inputs.github_token}}
-    - "--source-code-path"
-    - ${{ inputs.source_code_path}}
+    - "--github-workspace"
+    - ${{ inputs.github_workspace}}
     - "--risken-endpoint"
     - ${{ inputs.risken_endpoint}}
     - "--risken-api-token"

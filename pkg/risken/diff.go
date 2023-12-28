@@ -21,7 +21,7 @@ func (r *riskenService) Diff(ctx context.Context, sourceCodePath string, pr gith
 	}
 	baseRef, err := getCommitObject(repo, *pr.Base.SHA)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get base commit: sha=%s, err=%w", *pr.Base.SHA, err)
+		return nil, fmt.Errorf("failed to get base commit: path=%s, sha=%s, err=%w", sourceCodePath, *pr.Base.SHA, err)
 	}
 
 	if pr.Head == nil || pr.Head.SHA == nil {
@@ -29,7 +29,7 @@ func (r *riskenService) Diff(ctx context.Context, sourceCodePath string, pr gith
 	}
 	headRef, err := getCommitObject(repo, *pr.Head.SHA)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get head commit: sha=%s, err=%w", *pr.Head.SHA, err)
+		return nil, fmt.Errorf("failed to get head commit: path=%s, sha=%s, err=%w", sourceCodePath, *pr.Head.SHA, err)
 	}
 
 	patch, err := baseRef.Patch(headRef)

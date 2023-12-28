@@ -10,11 +10,11 @@ type RiskenService interface {
 }
 
 type RiskenConfig struct {
+	GithubToken     string
 	GithubEventPath string
-	SourceCodePath  string
+	GithubWorkspace string
 	RiskenEndpoint  string
 	RiskenApiToken  string
-	GithubToken     string
 }
 
 type riskenService struct {
@@ -42,21 +42,21 @@ func (r *riskenService) Run(ctx context.Context) error {
 	}
 
 	// ソースコードの差分を取得
-	changeFiles, err := r.Diff(ctx, r.conf.SourceCodePath, *pr.PullRequest)
+	changeFiles, err := r.Diff(ctx, r.conf.GithubWorkspace, *pr.PullRequest)
 	if err != nil {
 		return err
 	}
 
 	// スキャン
 	semgrep := NewSemgrepScanner(r.logger)
-	semgrepResults, err := semgrep.Scan(ctx, *pr.Repository.HTMLURL, r.conf.SourceCodePath, changeFiles)
+	semgrepResults, err := semgrep.Scan(ctx, *pr.Repository.HTMLURL, r.conf.GithubWorkspace, changeFiles)
 	if err != nil {
 		return err
 	}
 	r.logger.InfoContext(ctx, "Success semgrep scan", slog.Int("results", len(semgrepResults)))
 
 	gitleaks := NewGitleaksScanner(r.logger)
-	gitleaksResults, err := gitleaks.Scan(ctx, *pr.Repository.HTMLURL, r.conf.SourceCodePath, changeFiles)
+	gitleaksResults, err := gitleaks.Scan(ctx, *pr.Repository.HTMLURL, r.conf.GithubWorkspace, changeFiles)
 	if err != nil {
 		return err
 	}
