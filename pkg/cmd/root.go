@@ -18,7 +18,7 @@ var rootCmd = &cobra.Command{
 		ctx, cancel := context.WithTimeout(context.Background(), 60*time.Minute)
 		defer cancel()
 		logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
-		riskenService := risken.NewRiskenService(&conf, logger)
+		riskenService := risken.NewRiskenService(ctx, &conf, logger)
 		return riskenService.Run(ctx)
 	},
 }
@@ -30,7 +30,7 @@ func Execute() error {
 var conf risken.RiskenConfig
 
 func init() {
-	rootCmd.PersistentFlags().StringVar(&conf.GithubToken, "github-token", "", "GitHub event path")
+	rootCmd.PersistentFlags().StringVar(&conf.GithubToken, "github-token", "", "GitHub token")
 	rootCmd.PersistentFlags().StringVar(&conf.GithubEventPath, "github-event-path", "", "GitHub event path")
 	rootCmd.PersistentFlags().StringVar(&conf.GithubWorkspace, "github-workspace", "", "GitHub workspace path")
 	rootCmd.PersistentFlags().StringVar(&conf.RiskenEndpoint, "risken-endpoint", "", "RISKEN API endpoint")

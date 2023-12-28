@@ -13,12 +13,12 @@ build:
 
 .PHONY: sh
 sh: build
-	docker run -it --rm -v $(CURDIR):/tmp/code --entrypoint /bin/sh risken-review:latest
+	docker run -it --rm -v $(CURDIR):/tmp/workspace --entrypoint /bin/sh risken-review:latest
 
 .PHONY: run
 run: build
 	docker run \
 		--rm \
 		--env-file=.env \
-		-v $(CURDIR):/tmp/code \
+		-v $(CURDIR):/tmp/workspace \
 		risken-review:latest

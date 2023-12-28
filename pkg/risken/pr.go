@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/google/go-github/v57/github"
-	"golang.org/x/oauth2"
 )
 
 // GithubPREvent is a struct for GitHub Pull Request Event.
@@ -19,12 +18,14 @@ type GithubPREvent struct {
 	Number      int                 `json:"number"`
 	PullRequest *github.PullRequest `json:"pull_request"`
 	Repository  *github.Repository  `json:"repository"`
+	Owner       string              `json:"owner"`
+	RepoName    string              `json:"repo_name"`
 }
 
-func (r *riskenService) GetGithubPREvent(ctx context.Context, githubEventPath string) (*GithubPREvent, error) {
-	file, err := os.Open(githubEventPath)
+func (r *riskenService) GetGithubPREvent() (*GithubPREvent, error) {
+	file, err := os.Open(r.conf.GithubEventPath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to open file: path=%s, err=%w", githubEventPath, err)
+		return nil, fmt.Errorf("failed to open file: path=%s, err=%w", r.conf.GithubEventPath, err)
 	}
 	defer file.Close()
 
@@ -34,36 +35,41 @@ func (r *riskenService) GetGithubPREvent(ctx context.Context, githubEventPath st
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode json: err=%w", err)
 	}
+
+	if event.Repository == nil || event.Repository.FullName == nil {
+		return nil, fmt.Errorf("invalid repository: %v", event.Repository)
+	}
+	fullName := *event.Repository.FullName
+	if !strings.Contains(fullName, "/") {
+		return nil, fmt.Errorf("invalid repository name: %s", fullName)
+	}
+	event.Owner = strings.Split(fullName, "/")[0]
+	event.RepoName = strings.Split(fullName, "/")[1]
 	return &event, nil
 }
 
-func (r *riskenService) PullRequestComment(ctx context.Context, repo *github.Repository, pr *github.PullRequest, scanResults []*ScanResult) error {
-	fullName := *repo.FullName
-	if !strings.Contains(fullName, "/") {
-		return fmt.Errorf("invalid repository name: %s", fullName)
-	}
-	owner := strings.Split(fullName, "/")[0]
-	repoName := strings.Split(fullName, "/")[1]
-	if pr.Number == nil {
-		return fmt.Errorf("invalid pull request number: %v", pr.Number)
-	}
-	prNumber := *pr.Number
-
-	ts := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: r.conf.GithubToken},
-	)
-	tc := oauth2.NewClient(ctx, ts)
-	client := github.NewClient(tc)
-
-	for _, r := range scanResults {
+func (r *riskenService) PullRequestComment(ctx context.Context, pr *GithubPREvent, scanResults []*ScanResult) error {
+	if len(scanResults) == 0 {
 		comment := &github.PullRequestComment{
-			Body:     github.String(r.ReviewComment + "\n\n_By RISKEN review_"),
-			CommitID: github.String(*pr.Head.SHA),
-			Path:     github.String(r.File),
-			Position: github.Int(r.Line),
+			Body:     github.String("セキュリティレビューを実施しました。\n特に問題は見つかりませんでした。\n\n_By RISKEN review_"),
+			CommitID: github.String(*pr.PullRequest.Head.SHA),
 		}
+		_, _, err := r.githubClient.PullRequests.CreateComment(ctx, pr.Owner, pr.RepoName, pr.Number, comment)
+		if err != nil {
+			return fmt.Errorf("failed to create comment: err=%w", err)
+		}
+		return nil
+	}
 
-		_, _, err := client.PullRequests.CreateComment(ctx, owner, repoName, prNumber, comment)
+	// Review Comment
+	for _, result := range scanResults {
+		comment := &github.PullRequestComment{
+			Body:     github.String(result.ReviewComment + "\n\n_By RISKEN review_"),
+			CommitID: github.String(*pr.PullRequest.Head.SHA),
+			Path:     github.String(result.File),
+			Position: github.Int(result.Line),
+		}
+		_, _, err := r.githubClient.PullRequests.CreateComment(ctx, pr.Owner, pr.RepoName, pr.Number, comment)
 		if err != nil {
 			return fmt.Errorf("failed to create comment: err=%w", err)
 		}

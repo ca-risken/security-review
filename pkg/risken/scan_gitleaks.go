@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"strings"
 
+	"github.com/google/go-github/v57/github"
 	"github.com/zricethezav/gitleaks/v8/detect"
 	"github.com/zricethezav/gitleaks/v8/report"
 )
@@ -20,15 +21,15 @@ func NewGitleaksScanner(logger *slog.Logger) Scanner {
 	}
 }
 
-func (s *GitleaksScanner) Scan(ctx context.Context, repositoryURL, sourceCodePath string, changeFiles []*string) ([]*ScanResult, error) {
+func (s *GitleaksScanner) Scan(ctx context.Context, repositoryURL, sourceCodePath string, changeFiles []*github.CommitFile) ([]*ScanResult, error) {
 	d, err := detect.NewDetectorDefaultConfig()
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize detector: %w", err)
 	}
 
 	gitleaksFindings := []report.Finding{}
-	for _, filePath := range changeFiles {
-		targetPath := fmt.Sprintf("%s/%s", sourceCodePath, *filePath)
+	for _, file := range changeFiles {
+		targetPath := fmt.Sprintf("%s/%s", sourceCodePath, *file.Filename)
 		findings, err := d.DetectFiles(targetPath)
 		if err != nil {
 			return nil, fmt.Errorf("failed to detect %s: %w", targetPath, err)

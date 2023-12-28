@@ -1,6 +1,10 @@
 package risken
 
-import "context"
+import (
+	"context"
+
+	"github.com/google/go-github/v57/github"
+)
 
 type ScanResult struct {
 	File          string
@@ -11,5 +15,5 @@ type ScanResult struct {
 }
 
 type Scanner interface {
-	Scan(ctx context.Context, repositoryURL, sourceCodePath string, changeFiles []*string) ([]*ScanResult, error)
+	Scan(ctx context.Context, repositoryURL, sourceCodePath string, changeFiles []*github.CommitFile) ([]*ScanResult, error)
 }
