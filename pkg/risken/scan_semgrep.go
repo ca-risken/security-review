@@ -45,7 +45,7 @@ func (s *SemgrepScanner) Scan(ctx context.Context, repositoryURL, sourceCodePath
 		if err != nil {
 			return nil, fmt.Errorf("failed to execute semgrep: targetPath=%s, err=%w, stderr=%+v", targetPath, err, stderr.String())
 		}
-		findings, err := parseSemgrepResult(sourceCodePath, stdout.String())
+		findings, err := parseSemgrepResult(sourceCodePath, stdout.String(), changeFiles)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse semgrep: targetPath=%s, err=%w", targetPath, err)
 		}
@@ -54,7 +54,7 @@ func (s *SemgrepScanner) Scan(ctx context.Context, repositoryURL, sourceCodePath
 	return generateScanResultFromSemgrepResults(repositoryURL, semgrepFindings), nil
 }
 
-func parseSemgrepResult(sourceCodePath, scanResult string) ([]*semgrepFinding, error) {
+func parseSemgrepResult(sourceCodePath, scanResult string, changeFiles []*github.CommitFile) ([]*semgrepFinding, error) {
 	var results semgrepResults
 	err := json.Unmarshal([]byte(scanResult), &results)
 	if err != nil {
@@ -62,6 +62,9 @@ func parseSemgrepResult(sourceCodePath, scanResult string) ([]*semgrepFinding, e
 	}
 	findings := make([]*semgrepFinding, 0, len(results.Results))
 	for _, r := range results.Results {
+		if !isChangeLine(changeFiles, r.Extra.Lines) {
+			continue
+		}
 		r.Path = strings.ReplaceAll(r.Path, sourceCodePath+"/", "") // remove dir prefix
 		findings = append(findings, r)
 	}
