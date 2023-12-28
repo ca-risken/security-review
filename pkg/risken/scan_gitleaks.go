@@ -36,7 +36,7 @@ func (s *GitleaksScanner) Scan(ctx context.Context, repositoryURL, sourceCodePat
 		}
 		for _, f := range findings {
 			if isLineInDiff(file, f.Match) {
-				gitleaksFindings = append(gitleaksFindings, findings...)
+				gitleaksFindings = append(gitleaksFindings, f)
 			}
 		}
 	}
@@ -49,6 +49,7 @@ func generateScanResultFromGitleaksResults(repositoryURL, sourceCodePath string,
 		scanResults = append(scanResults, &ScanResult{
 			File:          strings.ReplaceAll(r.File, sourceCodePath+"/", ""), // remove dir prefix
 			Line:          r.EndLine,
+			DiffHunk:      r.Match,
 			ReviewComment: generateGitleaksReviewComment(&r),
 			GitHubURL:     generateGitHubURLForGitleaks(repositoryURL, &r),
 			ScanResult:    r,

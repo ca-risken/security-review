@@ -117,6 +117,7 @@ func generateScanResultFromSemgrepResults(repositoryURL string, results []*semgr
 		scanResults = append(scanResults, &ScanResult{
 			File:          r.Path,
 			Line:          r.End.Line,
+			DiffHunk:      r.Extra.Lines,
 			ReviewComment: generateSemgrepReviewComment(r, tech[0]),
 			GitHubURL:     generateGitHubURLForSemgrep(repositoryURL, r),
 			ScanResult:    r,

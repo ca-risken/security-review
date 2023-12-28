@@ -10,6 +10,7 @@ import (
 type ScanResult struct {
 	File          string
 	Line          int
+	DiffHunk      string
 	ReviewComment string
 	GitHubURL     string
 	ScanResult    any
