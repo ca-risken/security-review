@@ -55,19 +55,20 @@ const (
 )
 
 func (r *riskenService) PullRequestComment(ctx context.Context, pr *GithubPREvent, scanResults []*ScanResult) error {
-	comments, err := r.getAllComments(ctx, pr.Owner, pr.RepoName, pr.Number)
-	if err != nil {
-		return fmt.Errorf("failed to get all comments: err=%w", err)
-	}
+
 	if len(scanResults) == 0 {
-		if existsSimilarComment(comments, "特に問題は見つかりませんでした") {
+		comments, err := r.getAllIssueComments(ctx, pr.Owner, pr.RepoName, pr.Number)
+		if err != nil {
+			return fmt.Errorf("failed to get all issue comments: err=%w", err)
+		}
+		if existsSimilarIssueComment(comments, "特に問題は見つかりませんでした") {
 			return nil
 		}
 
 		comment := &github.IssueComment{
 			Body: github.String(NO_REVIEW_COMMENT),
 		}
-		_, _, err := r.githubClient.Issues.CreateComment(ctx, pr.Owner, pr.RepoName, pr.Number, comment)
+		_, _, err = r.githubClient.Issues.CreateComment(ctx, pr.Owner, pr.RepoName, pr.Number, comment)
 		if err != nil {
 			return fmt.Errorf("failed to create comment: err=%w", err)
 		}
@@ -75,8 +76,12 @@ func (r *riskenService) PullRequestComment(ctx context.Context, pr *GithubPREven
 	}
 
 	// Review Comment
+	comments, err := r.getAllPRComments(ctx, pr.Owner, pr.RepoName, pr.Number)
+	if err != nil {
+		return fmt.Errorf("failed to get all comments: err=%w", err)
+	}
 	for _, result := range scanResults {
-		if existsSimilarComment(comments, result.ScanID) {
+		if existsSimilarPRComment(comments, result.ScanID) {
 			r.logger.WarnContext(ctx, "already exists similar comment", slog.String("file", result.File), slog.Int("line", result.Line), slog.String("ID", result.ScanID))
 			continue
 		}
@@ -95,7 +100,26 @@ func (r *riskenService) PullRequestComment(ctx context.Context, pr *GithubPREven
 	return nil
 }
 
-func (r *riskenService) getAllComments(ctx context.Context, owner, repo string, prNumber int) ([]*github.PullRequestComment, error) {
+func (r *riskenService) getAllIssueComments(ctx context.Context, owner, repo string, issueNumber int) ([]*github.IssueComment, error) {
+	var allComments []*github.IssueComment
+	opts := &github.IssueListCommentsOptions{ListOptions: github.ListOptions{PerPage: 100}} // ページごとのアイテム数を設定
+
+	for {
+		comments, resp, err := r.githubClient.Issues.ListComments(ctx, owner, repo, issueNumber, opts)
+		if err != nil {
+			return nil, err
+		}
+		allComments = append(allComments, comments...)
+		if resp.NextPage == 0 {
+			break
+		}
+		opts.Page = resp.NextPage
+	}
+
+	return allComments, nil
+}
+
+func (r *riskenService) getAllPRComments(ctx context.Context, owner, repo string, prNumber int) ([]*github.PullRequestComment, error) {
 	var allComments []*github.PullRequestComment
 	opts := &github.PullRequestListCommentsOptions{ListOptions: github.ListOptions{PerPage: 100}}
 	for {
@@ -113,7 +137,16 @@ func (r *riskenService) getAllComments(ctx context.Context, owner, repo string, 
 	return allComments, nil
 }
 
-func existsSimilarComment(comments []*github.PullRequestComment, key string) bool {
+func existsSimilarPRComment(comments []*github.PullRequestComment, key string) bool {
+	for _, c := range comments {
+		if strings.Contains(*c.Body, key) {
+			return true
+		}
+	}
+	return false
+}
+
+func existsSimilarIssueComment(comments []*github.IssueComment, key string) bool {
 	for _, c := range comments {
 		if strings.Contains(*c.Body, key) {
 			return true
