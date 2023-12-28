@@ -59,7 +59,7 @@ func generateGitHubURLForGitleaks(repositoryURL string, f *report.Finding) strin
 
 const (
 	GITLEAKS_REVIEW_COMMENT_TEMPLATE = `
-シークレット情報が含まれている可能性があります。
+シークレット情報が含まれている可能性があります👀
 
 #### シークレットスキャン結果
 
