@@ -35,7 +35,6 @@ func (s *GitleaksScanner) Scan(ctx context.Context, repositoryURL, sourceCodePat
 			return nil, fmt.Errorf("failed to detect %s: %w", targetPath, err)
 		}
 		for _, f := range findings {
-
 			if strings.Contains(*file.Patch, f.Line) {
 				gitleaksFindings = append(gitleaksFindings, findings...)
 			}

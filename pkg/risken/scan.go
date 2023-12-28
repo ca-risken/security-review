@@ -19,8 +19,11 @@ type Scanner interface {
 	Scan(ctx context.Context, repositoryURL, sourceCodePath string, changeFiles []*github.CommitFile) ([]*ScanResult, error)
 }
 
-func isChangeLine(files []*github.CommitFile, line string) bool {
+func isChangeLine(files []*github.CommitFile, fileName, line string) bool {
 	for _, f := range files {
+		if *f.Filename != fileName {
+			continue
+		}
 		if strings.Contains(*f.Patch, line) {
 			return true
 		}
