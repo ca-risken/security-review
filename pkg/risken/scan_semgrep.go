@@ -115,6 +115,7 @@ func generateScanResultFromSemgrepResults(repositoryURL string, results []*semgr
 			continue
 		}
 		scanResults = append(scanResults, &ScanResult{
+			ScanID:        r.CheckID,
 			File:          r.Path,
 			Line:          r.End.Line,
 			DiffHunk:      r.Extra.Lines,

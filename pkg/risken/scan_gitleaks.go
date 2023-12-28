@@ -47,6 +47,7 @@ func generateScanResultFromGitleaksResults(repositoryURL, sourceCodePath string,
 	var scanResults []*ScanResult
 	for _, r := range results {
 		scanResults = append(scanResults, &ScanResult{
+			ScanID:        r.RuleID,
 			File:          strings.ReplaceAll(r.File, sourceCodePath+"/", ""), // remove dir prefix
 			Line:          r.EndLine,
 			DiffHunk:      r.Match,

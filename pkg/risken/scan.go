@@ -8,6 +8,7 @@ import (
 )
 
 type ScanResult struct {
+	ScanID        string
 	File          string
 	Line          int
 	DiffHunk      string

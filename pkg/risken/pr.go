@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/google/go-github/v57/github"
 )
@@ -62,7 +63,15 @@ func (r *riskenService) PullRequestComment(ctx context.Context, pr *GithubPREven
 	}
 
 	// Review Comment
+	comments, err := r.getAllComments(ctx, pr.Owner, pr.RepoName, pr.Number)
+	if err != nil {
+		return fmt.Errorf("failed to get all comments: err=%w", err)
+	}
 	for _, result := range scanResults {
+		if existsSimilarComment(comments, result.ScanID) {
+			r.logger.WarnContext(ctx, "already exists similar comment", slog.String("file", result.File), slog.Int("line", result.Line), slog.String("ID", result.ScanID))
+			continue
+		}
 		comment := &github.PullRequestComment{
 			Body:     github.String(result.ReviewComment + "\n\n_By RISKEN review_"),
 			CommitID: github.String(*pr.PullRequest.Head.SHA),
@@ -76,4 +85,31 @@ func (r *riskenService) PullRequestComment(ctx context.Context, pr *GithubPREven
 		}
 	}
 	return nil
+}
+
+func (r *riskenService) getAllComments(ctx context.Context, owner, repo string, prNumber int) ([]*github.PullRequestComment, error) {
+	var allComments []*github.PullRequestComment
+	opts := &github.PullRequestListCommentsOptions{ListOptions: github.ListOptions{PerPage: 100}}
+	for {
+		comments, resp, err := r.githubClient.PullRequests.ListComments(ctx, owner, repo, prNumber, opts)
+		if err != nil {
+			return nil, err
+		}
+		allComments = append(allComments, comments...)
+		if resp.NextPage == 0 {
+			break
+		}
+		opts.Page = resp.NextPage
+		time.Sleep(500 * time.Millisecond)
+	}
+	return allComments, nil
+}
+
+func existsSimilarComment(comments []*github.PullRequestComment, key string) bool {
+	for _, c := range comments {
+		if strings.Contains(*c.Body, key) {
+			return true
+		}
+	}
+	return false
 }
