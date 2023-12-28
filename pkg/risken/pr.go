@@ -59,7 +59,7 @@ func (r *riskenService) PullRequestComment(ctx context.Context, pr *GithubPREven
 	if err != nil {
 		return fmt.Errorf("failed to get all comments: err=%w", err)
 	}
-	if len(scanResults) == 0 && existsSimilarComment(comments, NO_REVIEW_COMMENT) {
+	if len(scanResults) == 0 && !existsSimilarComment(comments, "特に問題は見つかりませんでした👏") {
 		comment := &github.IssueComment{
 			Body: github.String(NO_REVIEW_COMMENT),
 		}
