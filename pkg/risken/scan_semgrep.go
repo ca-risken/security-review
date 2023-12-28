@@ -149,7 +149,7 @@ func getSemgrepTechnology(metadata interface{}) []string {
 
 const (
 	SEMGREP_REVIEW_COMMENT_TEMPLATE = `
-問題のコードを発見しました。修正が必要か確認してください。
+問題のコードを発見しました。修正が必要か確認してください。👀
 
 #### コードスキャン結果
 

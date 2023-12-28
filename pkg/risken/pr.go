@@ -50,11 +50,10 @@ func (r *riskenService) GetGithubPREvent() (*GithubPREvent, error) {
 
 func (r *riskenService) PullRequestComment(ctx context.Context, pr *GithubPREvent, scanResults []*ScanResult) error {
 	if len(scanResults) == 0 {
-		comment := &github.PullRequestComment{
-			Body:     github.String("セキュリティレビューを実施しました。\n特に問題は見つかりませんでした。\n\n_By RISKEN review_"),
-			CommitID: github.String(*pr.PullRequest.Head.SHA),
+		comment := &github.IssueComment{
+			Body: github.String("セキュリティレビューを実施しました。\n特に問題は見つかりませんでした👏👏👏\n\n_By RISKEN review_"),
 		}
-		_, _, err := r.githubClient.PullRequests.CreateComment(ctx, pr.Owner, pr.RepoName, pr.Number, comment)
+		_, _, err := r.githubClient.Issues.CreateComment(ctx, pr.Owner, pr.RepoName, pr.Number, comment)
 		if err != nil {
 			return fmt.Errorf("failed to create comment: err=%w", err)
 		}
