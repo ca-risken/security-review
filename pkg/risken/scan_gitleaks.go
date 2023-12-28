@@ -69,5 +69,5 @@ const (
 )
 
 func generateGitleaksReviewComment(f *report.Finding) string {
-	return fmt.Sprintf(GITLEAKS_REVIEW_COMMENT_TEMPLATE, f.Description, f.RuleID)
+	return fmt.Sprintf(GITLEAKS_REVIEW_COMMENT_TEMPLATE, f.RuleID, f.Description)
 }
