@@ -67,7 +67,7 @@ func (r *riskenService) PullRequestComment(ctx context.Context, pr *GithubPREven
 			Body:     github.String(result.ReviewComment + "\n\n_By RISKEN review_"),
 			CommitID: github.String(*pr.PullRequest.Head.SHA),
 			Path:     github.String(result.File),
-			Position: github.Int(result.Line),
+			Line:     github.Int(result.Line),
 		}
 		_, _, err := r.githubClient.PullRequests.CreateComment(ctx, pr.Owner, pr.RepoName, pr.Number, comment)
 		if err != nil {
