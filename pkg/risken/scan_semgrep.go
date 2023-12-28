@@ -155,6 +155,7 @@ const (
 
 - Semgrep CheckID: %s
 - 説明: %s
+- 問題の行:
 
 ` + "```" + `%s
 %s
@@ -163,5 +164,5 @@ const (
 )
 
 func generateSemgrepReviewComment(f *semgrepFinding, tech string) string {
-	return fmt.Sprintf(SEMGREP_REVIEW_COMMENT_TEMPLATE, f.Extra.Message, f.CheckID, tech, f.Extra.Lines)
+	return fmt.Sprintf(SEMGREP_REVIEW_COMMENT_TEMPLATE, f.CheckID, f.Extra.Message, tech, f.Extra.Lines)
 }
