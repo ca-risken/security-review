@@ -1,0 +1,18 @@
+name: Security Code Review on PR
+on:
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize]
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write # risken review needs this permission to create a comment on the PR
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ca-risken/security-review@main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
