@@ -8,6 +8,8 @@ import (
 	"log/slog"
 	"os/exec"
 	"strings"
+
+	"github.com/google/go-github/v57/github"
 )
 
 type SemgrepScanner struct {
@@ -20,10 +22,10 @@ func NewSemgrepScanner(logger *slog.Logger) Scanner {
 	}
 }
 
-func (s *SemgrepScanner) Scan(ctx context.Context, repositoryURL, sourceCodePath string, changeFiles []*string) ([]*ScanResult, error) {
+func (s *SemgrepScanner) Scan(ctx context.Context, repositoryURL, sourceCodePath string, changeFiles []*github.CommitFile) ([]*ScanResult, error) {
 	var semgrepFindings []*semgrepFinding
-	for _, filePath := range changeFiles {
-		targetPath := fmt.Sprintf("%s/%s", sourceCodePath, *filePath)
+	for _, file := range changeFiles {
+		targetPath := fmt.Sprintf("%s/%s", sourceCodePath, *file.Filename)
 		cmd := exec.CommandContext(ctx,
 			"semgrep",
 			"scan",
