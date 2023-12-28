@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"os"
 	"strings"
 
@@ -70,7 +71,8 @@ func (r *riskenService) PullRequestComment(ctx context.Context, pr *GithubPREven
 		}
 		_, _, err := r.githubClient.PullRequests.CreateComment(ctx, pr.Owner, pr.RepoName, pr.Number, comment)
 		if err != nil {
-			return fmt.Errorf("failed to create comment: err=%w", err)
+			r.logger.WarnContext(ctx, "failed to create comment", slog.String("file", result.File), slog.Int("line", result.Line), slog.String("err", err.Error()))
+			continue
 		}
 	}
 	return nil
