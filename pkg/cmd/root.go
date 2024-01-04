@@ -12,13 +12,13 @@ import (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "risken-review --github-event-path <path> --github-token <token> --github-workspace <path> [--risken-endpoint <endpoint>] [--risken-api-token <token>]",
+	Use:   "risken-review --github-event-path <path> --github-token <token> --github-workspace <path> [--error --risken-endpoint <endpoint>] [--risken-api-token <token>]",
 	Short: "risken-review command is a GitHub Custom Action to review pull request with Risken",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx, cancel := context.WithTimeout(context.Background(), 60*time.Minute)
 		defer cancel()
 		logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
-		riskenService := risken.NewRiskenService(ctx, &conf, logger)
+		riskenService := risken.NewRiskenService(ctx, &opt, logger)
 		return riskenService.Run(ctx)
 	},
 }
@@ -27,34 +27,35 @@ func Execute() error {
 	return rootCmd.Execute()
 }
 
-var conf risken.RiskenConfig
+var opt risken.RiskenOption
 
 func init() {
-	rootCmd.PersistentFlags().StringVar(&conf.GithubToken, "github-token", "", "GitHub token")
-	rootCmd.PersistentFlags().StringVar(&conf.GithubEventPath, "github-event-path", "", "GitHub event path")
-	rootCmd.PersistentFlags().StringVar(&conf.GithubWorkspace, "github-workspace", "", "GitHub workspace path")
-	rootCmd.PersistentFlags().StringVar(&conf.RiskenEndpoint, "risken-endpoint", "", "RISKEN API endpoint")
-	rootCmd.PersistentFlags().StringVar(&conf.RiskenApiToken, "risken-api-token", "", "RISKEN API token for authentication")
+	rootCmd.PersistentFlags().StringVar(&opt.GithubToken, "github-token", "", "GitHub token")
+	rootCmd.PersistentFlags().StringVar(&opt.GithubEventPath, "github-event-path", "", "GitHub event path")
+	rootCmd.PersistentFlags().StringVar(&opt.GithubWorkspace, "github-workspace", "", "GitHub workspace path")
+	rootCmd.PersistentFlags().BoolVar(&opt.ErrorFlag, "error", false, "Exit 1 if there are findings")
+	rootCmd.PersistentFlags().StringVar(&opt.RiskenEndpoint, "risken-endpoint", "", "RISKEN API endpoint")
+	rootCmd.PersistentFlags().StringVar(&opt.RiskenApiToken, "risken-api-token", "", "RISKEN API token for authentication")
 
 	// rootCmd.MarkPersistentFlagRequired("github-event-path")
 	// rootCmd.MarkPersistentFlagRequired("github-token")
 	// rootCmd.MarkPersistentFlagRequired("github-workspace")
-	cobra.OnInitialize(initConfig)
+	cobra.OnInitialize(initoptig)
 }
 
-func initConfig() {
+func initoptig() {
 	// Try to get values from environment variables
 	// https://docs.github.com/ja/actions/learn-github-actions/variables#default-environment-variables
-	if conf.GithubToken == "" {
-		conf.GithubToken = getEnv("GITHUB_TOKEN")
+	if opt.GithubToken == "" {
+		opt.GithubToken = getEnv("GITHUB_TOKEN")
 	}
-	if conf.GithubEventPath == "" {
-		conf.GithubEventPath = getEnv("GITHUB_EVENT_PATH")
+	if opt.GithubEventPath == "" {
+		opt.GithubEventPath = getEnv("GITHUB_EVENT_PATH")
 	}
-	if conf.GithubWorkspace == "" {
-		conf.GithubWorkspace = getEnv("GITHUB_WORKSPACE")
+	if opt.GithubWorkspace == "" {
+		opt.GithubWorkspace = getEnv("GITHUB_WORKSPACE")
 	}
-	if conf.GithubToken == "" || conf.GithubEventPath == "" || conf.GithubWorkspace == "" {
+	if opt.GithubToken == "" || opt.GithubEventPath == "" || opt.GithubWorkspace == "" {
 		log.Fatal("Missing required parameters")
 	}
 }

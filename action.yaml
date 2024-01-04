@@ -19,6 +19,9 @@ inputs:
   risken_api_token:
     description: "RISKEN API token"
     default: ""
+  options:
+    description: "Other options"
+    default: ""
 runs:
   using: "docker"
   image: "docker://ssgca/security-review:v1"
@@ -33,6 +36,7 @@ runs:
     - ${{ inputs.risken_endpoint}}
     - "--risken-api-token"
     - ${{ inputs.risken_api_token}}
+    - ${{ inputs.options}}
 branding:
   icon: "check-circle"
   color: "white"
