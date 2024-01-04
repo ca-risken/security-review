@@ -25,9 +25,9 @@ type GithubPREvent struct {
 }
 
 func (r *riskenService) GetGithubPREvent() (*GithubPREvent, error) {
-	file, err := os.Open(r.conf.GithubEventPath)
+	file, err := os.Open(r.opt.GithubEventPath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to open file: path=%s, err=%w", r.conf.GithubEventPath, err)
+		return nil, fmt.Errorf("failed to open file: path=%s, err=%w", r.opt.GithubEventPath, err)
 	}
 	defer file.Close()
 

@@ -14,11 +14,11 @@ const (
 
 func (s *riskenService) InvokePRReview(ctx context.Context) error {
 	client := &http.Client{}
-	req, err := http.NewRequest("GET", s.conf.RiskenEndpoint+RISKEN_API_GITHUB_REVIEW_PATH, nil)
+	req, err := http.NewRequest("GET", s.opt.RiskenEndpoint+RISKEN_API_GITHUB_REVIEW_PATH, nil)
 	if err != nil {
 		return err
 	}
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", s.conf.RiskenApiToken))
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", s.opt.RiskenApiToken))
 	resp, err := client.Do(req)
 	if err != nil {
 		return err
