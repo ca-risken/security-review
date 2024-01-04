@@ -16,3 +16,4 @@ jobs:
       - uses: ca-risken/security-review@v1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          options: '--error'
