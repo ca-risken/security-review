@@ -31,8 +31,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ca-risken/security-review@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 ```
 
 ## Integrate RISKEN.
