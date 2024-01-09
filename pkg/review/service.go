@@ -1,4 +1,4 @@
-package risken
+package review
 
 import (
 	"context"
@@ -9,11 +9,11 @@ import (
 	"golang.org/x/oauth2"
 )
 
-type RiskenService interface {
+type ReviewService interface {
 	Run(ctx context.Context) error
 }
 
-type RiskenOption struct {
+type ReviewOption struct {
 	GithubToken     string
 	GithubEventPath string
 	GithubWorkspace string
@@ -22,26 +22,26 @@ type RiskenOption struct {
 	RiskenApiToken  string
 }
 
-type riskenService struct {
-	opt          *RiskenOption
+type reviewService struct {
+	opt          *ReviewOption
 	githubClient *github.Client
 	logger       *slog.Logger
 }
 
-func NewRiskenService(ctx context.Context, opt *RiskenOption, logger *slog.Logger) RiskenService {
+func NewReviewService(ctx context.Context, opt *ReviewOption, logger *slog.Logger) ReviewService {
 	ts := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: opt.GithubToken},
 	)
 	tc := oauth2.NewClient(ctx, ts)
 	client := github.NewClient(tc)
-	return &riskenService{
+	return &reviewService{
 		opt:          opt,
 		githubClient: client,
 		logger:       logger,
 	}
 }
 
-func (r *riskenService) Run(ctx context.Context) error {
+func (r *reviewService) Run(ctx context.Context) error {
 	// PR情報を取得（なければ終了）
 	pr, err := r.GetGithubPREvent()
 	if err != nil {

@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/ca-risken/security-review/pkg/risken"
+	"github.com/ca-risken/security-review/pkg/review"
 	"github.com/spf13/cobra"
 )
 
@@ -18,7 +18,7 @@ var rootCmd = &cobra.Command{
 		ctx, cancel := context.WithTimeout(context.Background(), 60*time.Minute)
 		defer cancel()
 		logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
-		riskenService := risken.NewRiskenService(ctx, &opt, logger)
+		riskenService := review.NewReviewService(ctx, &opt, logger)
 		return riskenService.Run(ctx)
 	},
 }
@@ -27,7 +27,7 @@ func Execute() error {
 	return rootCmd.Execute()
 }
 
-var opt risken.RiskenOption
+var opt review.ReviewOption
 
 func init() {
 	rootCmd.PersistentFlags().StringVar(&opt.GithubToken, "github-token", "", "GitHub token")
@@ -37,9 +37,6 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&opt.RiskenEndpoint, "risken-endpoint", "", "RISKEN API endpoint")
 	rootCmd.PersistentFlags().StringVar(&opt.RiskenApiToken, "risken-api-token", "", "RISKEN API token for authentication")
 
-	// rootCmd.MarkPersistentFlagRequired("github-event-path")
-	// rootCmd.MarkPersistentFlagRequired("github-token")
-	// rootCmd.MarkPersistentFlagRequired("github-workspace")
 	cobra.OnInitialize(initoptig)
 }
 

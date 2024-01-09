@@ -1,4 +1,4 @@
-package risken
+package review
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 	"github.com/google/go-github/v57/github"
 )
 
-func (r *riskenService) Diff(ctx context.Context, pr *GithubPREvent) ([]*github.CommitFile, error) {
+func (r *reviewService) Diff(ctx context.Context, pr *GithubPREvent) ([]*github.CommitFile, error) {
 	opts := &github.ListOptions{
 		PerPage: 100,
 	}

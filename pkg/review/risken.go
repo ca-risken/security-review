@@ -1,4 +1,4 @@
-package risken
+package review
 
 import (
 	"context"
@@ -12,7 +12,7 @@ const (
 	RISKEN_API_GITHUB_REVIEW_PATH = "/api/v1/code/list-github-setting/?project_id=1247" // TODO: fix
 )
 
-func (s *riskenService) InvokePRReview(ctx context.Context) error {
+func (s *reviewService) InvokePRReview(ctx context.Context) error {
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", s.opt.RiskenEndpoint+RISKEN_API_GITHUB_REVIEW_PATH, nil)
 	if err != nil {
