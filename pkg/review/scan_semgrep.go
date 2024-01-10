@@ -9,7 +9,8 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/google/go-github/v57/github"
+	"github.com/ca-risken/code/pkg/codescan"
+	"github.com/google/go-github/v44/github"
 )
 
 type SemgrepScanner struct {
@@ -22,8 +23,8 @@ func NewSemgrepScanner(logger *slog.Logger) Scanner {
 	}
 }
 
-func (s *SemgrepScanner) Scan(ctx context.Context, repositoryURL, sourceCodePath string, changeFiles []*github.CommitFile) ([]*ScanResult, error) {
-	var semgrepFindings []*semgrepFinding
+func (s *SemgrepScanner) Scan(ctx context.Context, repo *github.Repository, sourceCodePath string, changeFiles []*github.CommitFile) ([]*ScanResult, error) {
+	var semgrepFindings []*codescan.SemgrepFinding
 	for _, file := range changeFiles {
 		targetPath := fmt.Sprintf("%s/%s", sourceCodePath, *file.Filename)
 		cmd := exec.CommandContext(ctx,
@@ -51,16 +52,16 @@ func (s *SemgrepScanner) Scan(ctx context.Context, repositoryURL, sourceCodePath
 		}
 		semgrepFindings = append(semgrepFindings, findings...)
 	}
-	return generateScanResultFromSemgrepResults(repositoryURL, semgrepFindings), nil
+	return generateScanResultFromSemgrepResults(repo, semgrepFindings), nil
 }
 
-func parseSemgrepResult(sourceCodePath, scanResult string, changeFiles []*github.CommitFile) ([]*semgrepFinding, error) {
-	var results semgrepResults
+func parseSemgrepResult(sourceCodePath, scanResult string, changeFiles []*github.CommitFile) ([]*codescan.SemgrepFinding, error) {
+	var results codescan.SemgrepResults
 	err := json.Unmarshal([]byte(scanResult), &results)
 	if err != nil {
 		return nil, err
 	}
-	findings := make([]*semgrepFinding, 0, len(results.Results))
+	findings := make([]*codescan.SemgrepFinding, 0, len(results.Results))
 	for _, r := range results.Results {
 		fileName := strings.ReplaceAll(r.Path, sourceCodePath+"/", "") // remove dir prefix
 		if !isChangeLine(changeFiles, fileName, r.Extra.Lines) {
@@ -72,55 +73,16 @@ func parseSemgrepResult(sourceCodePath, scanResult string, changeFiles []*github
 	return findings, nil
 }
 
-type semgrepResults struct {
-	Results []*semgrepFinding `json:"results,omitempty"`
-}
-
-type semgrepFinding struct {
-	CheckID string        `json:"check_id,omitempty"`
-	Path    string        `json:"path,omitempty"`
-	Start   *semgrepLine  `json:"start,omitempty"`
-	End     *semgrepLine  `json:"end,omitempty"`
-	Extra   *semgrepExtra `json:"extra,omitempty"`
-}
-
-type semgrepLine struct {
-	Line   int `json:"line,omitempty"`
-	Column int `json:"col,omitempty"`
-	Offset int `json:"offset,omitempty"`
-}
-type semgrepExtra struct {
-	Lines    string `json:"lines,omitempty"`
-	Message  string `json:"message,omitempty"`
-	Severity string `json:"severity,omitempty"`
-	Metadata any    `json:"metadata,omitempty"`
-}
-
-type semgrepMetadata struct {
-	Category    string   `json:"category,omitempty"`
-	Refences    []string `json:"references,omitempty"`
-	Technology  []string `json:"technology,omitempty"`
-	Confidence  string   `json:"confidence,omitempty"`
-	Likelihood  string   `json:"likelihood,omitempty"`
-	Impact      string   `json:"impact,omitempty"`
-	Subcategory []string `json:"subcategory,omitempty"`
-	CWE         []string `json:"cwe,omitempty"`
-}
-
-func generateScanResultFromSemgrepResults(repositoryURL string, results []*semgrepFinding) []*ScanResult {
+func generateScanResultFromSemgrepResults(repo *github.Repository, results []*codescan.SemgrepFinding) []*ScanResult {
 	var scanResults []*ScanResult
 	for _, r := range results {
-		tech := getSemgrepTechnology(r.Extra.Metadata)
-		if !isSupportedResult(tech) {
-			continue
-		}
 		scanResults = append(scanResults, &ScanResult{
 			ScanID:        r.CheckID,
 			File:          r.Path,
 			Line:          r.End.Line,
 			DiffHunk:      r.Extra.Lines,
-			ReviewComment: generateSemgrepReviewComment(r, tech[0]),
-			GitHubURL:     generateGitHubURLForSemgrep(repositoryURL, r),
+			ReviewComment: generateSemgrepReviewComment(r),
+			GitHubURL:     generateGitHubURLForSemgrep(*repo.HTMLURL, r),
 			ScanResult:    r,
 		})
 	}
@@ -136,21 +98,8 @@ func isSupportedResult(tech []string) bool {
 	return true
 }
 
-func generateGitHubURLForSemgrep(repositoryURL string, f *semgrepFinding) string {
+func generateGitHubURLForSemgrep(repositoryURL string, f *codescan.SemgrepFinding) string {
 	return fmt.Sprintf("%s/blob/master/%s#L%d-L%d", repositoryURL, f.Path, f.Start.Line, f.End.Line)
-}
-
-func getSemgrepTechnology(metadata interface{}) []string {
-	var semgrepMetadata semgrepMetadata
-	b, err := json.Marshal(metadata)
-	if err != nil {
-		return []string{}
-	}
-	err = json.Unmarshal(b, &semgrepMetadata)
-	if err != nil {
-		return []string{}
-	}
-	return semgrepMetadata.Technology
 }
 
 const (
@@ -159,16 +108,13 @@ const (
 
 #### コードスキャン結果
 
-- Semgrep CheckID: %s
-- 説明: %s
-- 問題の行:
-
-` + "```" + `%s
-%s
-` + "```" + `
+- Semgrep CheckID:
+	%s
+- 説明:
+	%s
 `
 )
 
-func generateSemgrepReviewComment(f *semgrepFinding, tech string) string {
-	return fmt.Sprintf(SEMGREP_REVIEW_COMMENT_TEMPLATE, f.CheckID, f.Extra.Message, tech, f.Extra.Lines)
+func generateSemgrepReviewComment(f *codescan.SemgrepFinding) string {
+	return fmt.Sprintf(SEMGREP_REVIEW_COMMENT_TEMPLATE, f.CheckID, f.Extra.Message)
 }

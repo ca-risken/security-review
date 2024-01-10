@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/google/go-github/v57/github"
+	"github.com/google/go-github/v44/github"
 )
 
 type ScanResult struct {
@@ -18,7 +18,7 @@ type ScanResult struct {
 }
 
 type Scanner interface {
-	Scan(ctx context.Context, repositoryURL, sourceCodePath string, changeFiles []*github.CommitFile) ([]*ScanResult, error)
+	Scan(ctx context.Context, repo *github.Repository, sourceCodePath string, changeFiles []*github.CommitFile) ([]*ScanResult, error)
 }
 
 func isChangeLine(files []*github.CommitFile, fileName, line string) bool {
@@ -44,4 +44,8 @@ func isLineInDiff(file *github.CommitFile, line string) bool {
 		}
 	}
 	return false
+}
+
+func removeDirPrefix(dir, path string) string {
+	return strings.ReplaceAll(path, dir+"/", "")
 }

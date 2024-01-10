@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/go-github/v57/github"
+	"github.com/google/go-github/v44/github"
 )
 
 // GithubPREvent is a struct for GitHub Pull Request Event.

@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/google/go-github/v57/github"
+	"github.com/google/go-github/v44/github"
 )
 
 func (r *reviewService) Diff(ctx context.Context, pr *GithubPREvent) ([]*github.CommitFile, error) {

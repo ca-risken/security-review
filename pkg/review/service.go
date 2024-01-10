@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/google/go-github/v57/github"
+	"github.com/ca-risken/go-risken"
+	"github.com/google/go-github/v44/github"
 	"golang.org/x/oauth2"
 )
 
@@ -25,6 +26,7 @@ type ReviewOption struct {
 type reviewService struct {
 	opt          *ReviewOption
 	githubClient *github.Client
+	riskenClient *risken.Client
 	logger       *slog.Logger
 }
 
@@ -33,10 +35,16 @@ func NewReviewService(ctx context.Context, opt *ReviewOption, logger *slog.Logge
 		&oauth2.Token{AccessToken: opt.GithubToken},
 	)
 	tc := oauth2.NewClient(ctx, ts)
-	client := github.NewClient(tc)
+	githubClient := github.NewClient(tc)
+
+	var riskenClient *risken.Client
+	if opt.RiskenEndpoint != "" && opt.RiskenApiToken != "" {
+		riskenClient = risken.NewClient(opt.RiskenEndpoint, risken.WithAPIEndpoint(opt.RiskenEndpoint))
+	}
 	return &reviewService{
 		opt:          opt,
-		githubClient: client,
+		githubClient: githubClient,
+		riskenClient: riskenClient,
 		logger:       logger,
 	}
 }
@@ -61,14 +69,14 @@ func (r *reviewService) Run(ctx context.Context) error {
 
 	// スキャン
 	semgrep := NewSemgrepScanner(r.logger)
-	semgrepResults, err := semgrep.Scan(ctx, *pr.Repository.HTMLURL, r.opt.GithubWorkspace, changeFiles)
+	semgrepResults, err := semgrep.Scan(ctx, pr.Repository, r.opt.GithubWorkspace, changeFiles)
 	if err != nil {
 		return err
 	}
 	r.logger.InfoContext(ctx, "Success semgrep scan", slog.Int("results", len(semgrepResults)))
 
 	gitleaks := NewGitleaksScanner(r.logger)
-	gitleaksResults, err := gitleaks.Scan(ctx, *pr.Repository.HTMLURL, r.opt.GithubWorkspace, changeFiles)
+	gitleaksResults, err := gitleaks.Scan(ctx, pr.Repository, r.opt.GithubWorkspace, changeFiles)
 	if err != nil {
 		return err
 	}
@@ -76,6 +84,10 @@ func (r *reviewService) Run(ctx context.Context) error {
 	scanResult := append(semgrepResults, gitleaksResults...)
 
 	// RISKNEN APIを叩く(optional)
+	if r.opt.RiskenEndpoint != "" && r.opt.RiskenApiToken != "" {
+	} else {
+		r.logger.InfoContext(ctx, "Skip RISKEN integration")
+	}
 
 	// PRコメント
 	if err := r.PullRequestComment(ctx, pr, scanResult); err != nil {

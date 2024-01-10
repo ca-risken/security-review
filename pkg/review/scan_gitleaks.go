@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"strings"
 
-	"github.com/google/go-github/v57/github"
+	"github.com/ca-risken/code/pkg/gitleaks"
+	"github.com/google/go-github/v44/github"
 	"github.com/zricethezav/gitleaks/v8/detect"
 	"github.com/zricethezav/gitleaks/v8/report"
 )
@@ -21,7 +21,7 @@ func NewGitleaksScanner(logger *slog.Logger) Scanner {
 	}
 }
 
-func (s *GitleaksScanner) Scan(ctx context.Context, repositoryURL, sourceCodePath string, changeFiles []*github.CommitFile) ([]*ScanResult, error) {
+func (s *GitleaksScanner) Scan(ctx context.Context, repo *github.Repository, sourceCodePath string, changeFiles []*github.CommitFile) ([]*ScanResult, error) {
 	d, err := detect.NewDetectorDefaultConfig()
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize detector: %w", err)
@@ -40,20 +40,22 @@ func (s *GitleaksScanner) Scan(ctx context.Context, repositoryURL, sourceCodePat
 			}
 		}
 	}
-	return generateScanResultFromGitleaksResults(repositoryURL, sourceCodePath, gitleaksFindings), nil
+	return generateScanResultFromGitleaksResults(repo, sourceCodePath, gitleaksFindings), nil
 }
 
-func generateScanResultFromGitleaksResults(repositoryURL, sourceCodePath string, results []report.Finding) []*ScanResult {
+func generateScanResultFromGitleaksResults(repo *github.Repository, sourceCodePath string, results []report.Finding) []*ScanResult {
+	gitleaksFinding := gitleaks.GenrateGitleaksFinding(repo, results)
+
 	var scanResults []*ScanResult
-	for _, r := range results {
+	for _, g := range gitleaksFinding {
 		scanResults = append(scanResults, &ScanResult{
-			ScanID:        r.RuleID,
-			File:          strings.ReplaceAll(r.File, sourceCodePath+"/", ""), // remove dir prefix
-			Line:          r.EndLine,
-			DiffHunk:      r.Match,
-			ReviewComment: generateGitleaksReviewComment(&r),
-			GitHubURL:     generateGitHubURLForGitleaks(repositoryURL, &r),
-			ScanResult:    r,
+			ScanID:        g.Result.RuleDescription,
+			File:          removeDirPrefix(sourceCodePath, g.Result.File),
+			Line:          g.Result.EndLine,
+			DiffHunk:      g.Result.Secret,
+			ReviewComment: generateGitleaksReviewComment(sourceCodePath, g.Result),
+			GitHubURL:     g.Result.GenerateGitHubURL(*repo.HTMLURL),
+			ScanResult:    g,
 		})
 	}
 	return scanResults
@@ -69,11 +71,14 @@ const (
 
 #### シークレットスキャン結果
 
-- Gitleaks RuleID: %s
 - シークレットタイプ: %s
+- 説明:
+  対象データがテスト用のダミーデータや公開可能な情報であるか確認してください。
+	もし、有効なシークレット情報の場合はキーのローテーションや権限の削除（キーの無効化）を行ってください。
+	どうしてもシークレット情報をコミットする必要がある場合は、プライベートリポジトリになっていることを確認しアクセスできる人を限定してください。
 `
 )
 
-func generateGitleaksReviewComment(f *report.Finding) string {
-	return fmt.Sprintf(GITLEAKS_REVIEW_COMMENT_TEMPLATE, f.RuleID, f.Description)
+func generateGitleaksReviewComment(sourceCodePath string, f *gitleaks.LeakFinding) string {
+	return fmt.Sprintf(GITLEAKS_REVIEW_COMMENT_TEMPLATE, f.RuleDescription)
 }
