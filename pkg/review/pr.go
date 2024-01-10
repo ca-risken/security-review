@@ -55,7 +55,7 @@ const (
 )
 
 func (r *reviewService) PullRequestComment(ctx context.Context, pr *GithubPREvent, scanResults []*ScanResult) error {
-
+	// No Review Comment
 	if len(scanResults) == 0 {
 		comments, err := r.getAllIssueComments(ctx, pr.Owner, pr.RepoName, pr.Number)
 		if err != nil {
@@ -87,7 +87,7 @@ func (r *reviewService) PullRequestComment(ctx context.Context, pr *GithubPREven
 			continue
 		}
 		comment := &github.PullRequestComment{
-			Body:     github.String(result.ReviewComment + "\n\n_By RISKEN review_"),
+			Body:     github.String(generatePRReviewComment(result)),
 			CommitID: github.String(*pr.PullRequest.Head.SHA),
 			Path:     github.String(result.File),
 			Line:     github.Int(result.Line),
@@ -154,4 +154,23 @@ func existsSimilarIssueComment(comments []*github.IssueComment, key string) bool
 		}
 	}
 	return false
+}
+
+const (
+	RISKEN_COMMENT_TEMPLATE = `
+
+#### RISKENで確認
+
+より詳細な情報や生成AIによる解説はRISKENコンソール上で確認できます。
+
+- %s`
+)
+
+func generatePRReviewComment(result *ScanResult) string {
+	reviewComment := result.ReviewComment
+	if result.RiskenURL != "" {
+		reviewComment += fmt.Sprintf(RISKEN_COMMENT_TEMPLATE, result.RiskenURL)
+	}
+	reviewComment += "\n\n_By RISKEN review_"
+	return reviewComment
 }

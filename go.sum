@@ -111,8 +111,8 @@ github.com/ca-risken/core v0.10.1-0.20231207084139-adc99d9a725b h1:Up1aZb1yYed4g
 github.com/ca-risken/core v0.10.1-0.20231207084139-adc99d9a725b/go.mod h1:6OB1QgAz4vMn5lzzRn1F8YWqQwZPrL8inD2mnr9Bvo4=
 github.com/ca-risken/datasource-api v0.10.0 h1:Nf7S4n640mno2UseZrlgcXtfAqnJfhuJScDH8ypgKwo=
 github.com/ca-risken/datasource-api v0.10.0/go.mod h1:ALnhUjHxCmyI6daaJF3Obi6lV5nIZatlISYFuWFybDE=
-github.com/ca-risken/go-risken v0.0.0-20240109055548-4309cd2f5281 h1:cS99mhUI5PWBNmkkHoedku9M6TzPsTG5ImNwoFj8LQc=
-github.com/ca-risken/go-risken v0.0.0-20240109055548-4309cd2f5281/go.mod h1:YdNPJor41fwia/ILUXCPVTu2NoL6VQzaFrmTFr3DERg=
+github.com/ca-risken/go-risken v0.0.0-20240110062719-4afdbe2ebcba h1:qC4RQ/2u5JW5FXe2ovHkDbl6Rf5tX7XJ8vF6ctgci7k=
+github.com/ca-risken/go-risken v0.0.0-20240110062719-4afdbe2ebcba/go.mod h1:YdNPJor41fwia/ILUXCPVTu2NoL6VQzaFrmTFr3DERg=
 github.com/ca-risken/go-sqs-poller/worker/v5 v5.0.0-20220525093235-9148d33b6aee h1:aIrvjCnF+Owzzh7dnE1w4442CdcuUkHaJsJOXImjeqg=
 github.com/ca-risken/go-sqs-poller/worker/v5 v5.0.0-20220525093235-9148d33b6aee/go.mod h1:pboVfH7X3jKqsVKSpYNYAgqgPQ6gVb+AjFuWH1e8dSU=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=

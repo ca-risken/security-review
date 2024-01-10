@@ -4,7 +4,9 @@ go 1.21.3
 
 require (
 	github.com/ca-risken/code v0.10.1-0.20240109091816-bb60a96c8645
-	github.com/ca-risken/go-risken v0.0.0-20240109055548-4309cd2f5281
+	github.com/ca-risken/core v0.10.1-0.20231207084139-adc99d9a725b
+	github.com/ca-risken/datasource-api v0.10.0
+	github.com/ca-risken/go-risken v0.0.0-20240110062719-4afdbe2ebcba
 	github.com/google/go-github/v44 v44.1.0
 	github.com/spf13/cobra v1.8.0
 	github.com/zricethezav/gitleaks/v8 v8.8.6
@@ -38,8 +40,6 @@ require (
 	github.com/aws/smithy-go v1.13.5 // indirect
 	github.com/ca-risken/common/pkg/logging v0.0.0-20221119073224-9db027bda6f8 // indirect
 	github.com/ca-risken/common/pkg/sqs v0.0.0-20221119073224-9db027bda6f8 // indirect
-	github.com/ca-risken/core v0.10.1-0.20231207084139-adc99d9a725b // indirect
-	github.com/ca-risken/datasource-api v0.10.0 // indirect
 	github.com/ca-risken/go-sqs-poller/worker/v5 v5.0.0-20220525093235-9148d33b6aee // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/dustin/go-humanize v1.0.0 // indirect

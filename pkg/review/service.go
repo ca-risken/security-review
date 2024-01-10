@@ -15,12 +15,13 @@ type ReviewService interface {
 }
 
 type ReviewOption struct {
-	GithubToken     string
-	GithubEventPath string
-	GithubWorkspace string
-	ErrorFlag       bool
-	RiskenEndpoint  string
-	RiskenApiToken  string
+	GithubToken       string
+	GithubEventPath   string
+	GithubWorkspace   string
+	ErrorFlag         bool
+	RiskenConsoleURL  string
+	RiskenApiEndpoint string
+	RiskenApiToken    string
 }
 
 type reviewService struct {
@@ -38,8 +39,12 @@ func NewReviewService(ctx context.Context, opt *ReviewOption, logger *slog.Logge
 	githubClient := github.NewClient(tc)
 
 	var riskenClient *risken.Client
-	if opt.RiskenEndpoint != "" && opt.RiskenApiToken != "" {
-		riskenClient = risken.NewClient(opt.RiskenEndpoint, risken.WithAPIEndpoint(opt.RiskenEndpoint))
+	if opt.RiskenApiEndpoint != "" && opt.RiskenApiToken != "" {
+		riskenClient = risken.NewClient(opt.RiskenApiToken, risken.WithAPIEndpoint(opt.RiskenApiEndpoint))
+		if opt.RiskenConsoleURL == "" {
+			logger.Info("RISKEN Console URL is not set. Use RISKEN API endpoint instead.")
+			opt.RiskenConsoleURL = opt.RiskenApiEndpoint
+		}
 	}
 	return &reviewService{
 		opt:          opt,
@@ -84,7 +89,18 @@ func (r *reviewService) Run(ctx context.Context) error {
 	scanResult := append(semgrepResults, gitleaksResults...)
 
 	// RISKNEN APIを叩く(optional)
-	if r.opt.RiskenEndpoint != "" && r.opt.RiskenApiToken != "" {
+	if r.riskenClient != nil {
+		projectID, err := r.getProjectID(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to get project ID: %w", err)
+		}
+		for i, result := range scanResult {
+			resp, err := r.putFinding(ctx, *projectID, result)
+			if err != nil {
+				return fmt.Errorf("failed to put finding: %w", err)
+			}
+			scanResult[i].RiskenURL = generateRiskenURL(r.opt.RiskenConsoleURL, resp.Finding.ProjectId, resp.Finding.FindingId)
+		}
 	} else {
 		r.logger.InfoContext(ctx, "Skip RISKEN integration")
 	}

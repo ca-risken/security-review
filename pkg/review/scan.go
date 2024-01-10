@@ -2,6 +2,7 @@ package review
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/google/go-github/v44/github"
@@ -15,6 +16,7 @@ type ScanResult struct {
 	ReviewComment string
 	GitHubURL     string
 	ScanResult    any
+	RiskenURL     string
 }
 
 type Scanner interface {
@@ -48,4 +50,8 @@ func isLineInDiff(file *github.CommitFile, line string) bool {
 
 func removeDirPrefix(dir, path string) string {
 	return strings.ReplaceAll(path, dir+"/", "")
+}
+
+func generateRiskenURL(riskenConsoleURL string, projectID uint32, findingID uint64) string {
+	return fmt.Sprintf("%s/finding/finding/?from_score=0&status=0&project_id=%d&finding_id=%d", riskenConsoleURL, projectID, findingID)
 }

@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"log/slog"
 	"os/exec"
 	"strings"
@@ -46,7 +47,7 @@ func (s *SemgrepScanner) Scan(ctx context.Context, repo *github.Repository, sour
 		if err != nil {
 			return nil, fmt.Errorf("failed to execute semgrep: targetPath=%s, err=%w, stderr=%+v", targetPath, err, stderr.String())
 		}
-		findings, err := parseSemgrepResult(sourceCodePath, stdout.String(), changeFiles)
+		findings, err := parseSemgrepResult(sourceCodePath, stdout.String(), repo, changeFiles)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse semgrep: targetPath=%s, err=%w", targetPath, err)
 		}
@@ -55,22 +56,68 @@ func (s *SemgrepScanner) Scan(ctx context.Context, repo *github.Repository, sour
 	return generateScanResultFromSemgrepResults(repo, semgrepFindings), nil
 }
 
-func parseSemgrepResult(sourceCodePath, scanResult string, changeFiles []*github.CommitFile) ([]*codescan.SemgrepFinding, error) {
-	var results codescan.SemgrepResults
-	err := json.Unmarshal([]byte(scanResult), &results)
+func parseSemgrepResult(sourceCodePath, scanResult string, repo *github.Repository, changeFiles []*github.CommitFile) ([]*codescan.SemgrepFinding, error) {
+	results, err := codescan.ParseSemgrepResult(sourceCodePath, scanResult, *repo.FullName, *repo.HTMLURL)
 	if err != nil {
 		return nil, err
 	}
-	findings := make([]*codescan.SemgrepFinding, 0, len(results.Results))
-	for _, r := range results.Results {
+
+	findings := []*codescan.SemgrepFinding{}
+	for _, r := range results {
 		fileName := strings.ReplaceAll(r.Path, sourceCodePath+"/", "") // remove dir prefix
 		if !isChangeLine(changeFiles, fileName, r.Extra.Lines) {
+			continue
+		}
+		tech := getSemgrepTechnology(r.Extra.Metadata)
+		log.Println(tech)
+		if !isSupportedResult(tech) {
 			continue
 		}
 		r.Path = fileName
 		findings = append(findings, r)
 	}
 	return findings, nil
+}
+
+type semgrepMetadata struct {
+	Category    string   `json:"category,omitempty"`
+	Refences    []string `json:"references,omitempty"`
+	Technology  []string `json:"technology,omitempty"`
+	Confidence  string   `json:"confidence,omitempty"`
+	Likelihood  string   `json:"likelihood,omitempty"`
+	Impact      string   `json:"impact,omitempty"`
+	Subcategory []string `json:"subcategory,omitempty"`
+	CWE         []string `json:"cwe,omitempty"`
+}
+
+func parseSemgrepMetadata(metadata interface{}) (*semgrepMetadata, error) {
+	var semgrepMetadata semgrepMetadata
+	b, err := json.Marshal(metadata)
+	if err != nil {
+		return nil, err
+	}
+	err = json.Unmarshal(b, &semgrepMetadata)
+	if err != nil {
+		return nil, err
+	}
+	return &semgrepMetadata, nil
+}
+
+func getSemgrepTechnology(metadata interface{}) []string {
+	parseMeta, err := parseSemgrepMetadata(metadata)
+	if err != nil {
+		return []string{}
+	}
+	return parseMeta.Technology
+}
+
+func isSupportedResult(tech []string) bool {
+	for _, t := range tech {
+		if t == "secret" || t == "secrets" {
+			return false // シークレットスキャンはGitleaksで行う（Semgrepは過検知も多いし、カバレッジも低い）
+		}
+	}
+	return true
 }
 
 func generateScanResultFromSemgrepResults(repo *github.Repository, results []*codescan.SemgrepFinding) []*ScanResult {
@@ -87,15 +134,6 @@ func generateScanResultFromSemgrepResults(repo *github.Repository, results []*co
 		})
 	}
 	return scanResults
-}
-
-func isSupportedResult(tech []string) bool {
-	for _, t := range tech {
-		if t == "secret" || t == "secrets" {
-			return false // シークレットスキャンはGitleaksで行う（Semgrepは過検知も多いし、カバレッジも低い）
-		}
-	}
-	return true
 }
 
 func generateGitHubURLForSemgrep(repositoryURL string, f *codescan.SemgrepFinding) string {
