@@ -35,11 +35,37 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
 ```
 
-## Integrate RISKEN.
+## Integrate RISKEN
 
 [RISKEN](https://docs.security-hub.jp/) is a platform for collecting security issues; Findings detected by Actions can be linked to the RISKEN environment for issue management, alerting, information sharing to the team, and analysis results from the generated AI.
 
-(あとで書く。。。)
+```yaml
+- uses: ca-risken/security-review@v1
+  with:
+    github_token: ${{ secrets.GITHUB_TOKEN }}
+    risken_console_url: ${{ env.RISKEN_CONSOLE_URL }}
+    risken_api_endpoint: ${{ env.RISKEN_API_ENDPOINT }}
+    risken_api_token: ${{ secrets.RISKEN_API_TOKEN }}
+```
+
+| Pameters | Description | Examples |
+| ---- | ---- | ---- |
+| `risken_console_url` | RISKEN Console URL | https://console.your-env.com |
+| `risken_api_endpoint` | RISKEN API Endpoint | https://api.your-env.com |
+| `risken_api_token` | RISKEN API Token | xxxxx |
+
+## Other Options
+
+```yaml
+- uses: ca-risken/security-review@v1
+  with:
+    github_token: ${{ secrets.GITHUB_TOKEN }}
+    options: '--error'
+```
+
+| Pameters | Description | Examples |
+| ---- | ---- | ---- |
+| `--error` | Exit 1 if there are finding (default: false) | --error |
 
 ## Test on local
 

@@ -13,8 +13,11 @@ inputs:
     description: "GitHub workspace"
     required: true
     default: ""
-  risken_endpoint:
-    description: "Endpoint of the RISKEN API"
+  risken_console_url:
+    description: "RISKEN Console URL"
+    default: ""
+  risken_api_endpoint:
+    description: "RISKEN API endpoint"
     default: ""
   risken_api_token:
     description: "RISKEN API token"
@@ -32,8 +35,10 @@ runs:
     - ${{ inputs.github_token}}
     - "--github-workspace"
     - ${{ inputs.github_workspace}}
-    - "--risken-endpoint"
-    - ${{ inputs.risken_endpoint}}
+    - "--risken-console-url"
+    - ${{ inputs.risken_console_url}}
+    - "--risken-api-endpoint"
+    - ${{ inputs.risken_api_endpoint}}
     - "--risken-api-token"
     - ${{ inputs.risken_api_token}}
     - ${{ inputs.options}}

@@ -1,10 +1,11 @@
-package risken
+package review
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
-	"github.com/google/go-github/v57/github"
+	"github.com/google/go-github/v44/github"
 )
 
 type ScanResult struct {
@@ -15,10 +16,11 @@ type ScanResult struct {
 	ReviewComment string
 	GitHubURL     string
 	ScanResult    any
+	RiskenURL     string
 }
 
 type Scanner interface {
-	Scan(ctx context.Context, repositoryURL, sourceCodePath string, changeFiles []*github.CommitFile) ([]*ScanResult, error)
+	Scan(ctx context.Context, repo *github.Repository, sourceCodePath string, changeFiles []*github.CommitFile) ([]*ScanResult, error)
 }
 
 func isChangeLine(files []*github.CommitFile, fileName, line string) bool {
@@ -44,4 +46,12 @@ func isLineInDiff(file *github.CommitFile, line string) bool {
 		}
 	}
 	return false
+}
+
+func removeDirPrefix(dir, path string) string {
+	return strings.ReplaceAll(path, dir+"/", "")
+}
+
+func generateRiskenURL(riskenConsoleURL string, projectID uint32, findingID uint64) string {
+	return fmt.Sprintf("%s/finding/finding/?from_score=0&status=0&project_id=%d&finding_id=%d", riskenConsoleURL, projectID, findingID)
 }

@@ -1,4 +1,4 @@
-package risken
+package review
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/go-github/v57/github"
+	"github.com/google/go-github/v44/github"
 )
 
 // GithubPREvent is a struct for GitHub Pull Request Event.
@@ -24,7 +24,7 @@ type GithubPREvent struct {
 	RepoName    string              `json:"repo_name"`
 }
 
-func (r *riskenService) GetGithubPREvent() (*GithubPREvent, error) {
+func (r *reviewService) GetGithubPREvent() (*GithubPREvent, error) {
 	file, err := os.Open(r.opt.GithubEventPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open file: path=%s, err=%w", r.opt.GithubEventPath, err)
@@ -54,8 +54,8 @@ const (
 	NO_REVIEW_COMMENT = "セキュリティレビューを実施しました。\n特に問題は見つかりませんでした👏\n\n_By RISKEN review_"
 )
 
-func (r *riskenService) PullRequestComment(ctx context.Context, pr *GithubPREvent, scanResults []*ScanResult) error {
-
+func (r *reviewService) PullRequestComment(ctx context.Context, pr *GithubPREvent, scanResults []*ScanResult) error {
+	// No Review Comment
 	if len(scanResults) == 0 {
 		comments, err := r.getAllIssueComments(ctx, pr.Owner, pr.RepoName, pr.Number)
 		if err != nil {
@@ -87,7 +87,7 @@ func (r *riskenService) PullRequestComment(ctx context.Context, pr *GithubPREven
 			continue
 		}
 		comment := &github.PullRequestComment{
-			Body:     github.String(result.ReviewComment + "\n\n_By RISKEN review_"),
+			Body:     github.String(generatePRReviewComment(result)),
 			CommitID: github.String(*pr.PullRequest.Head.SHA),
 			Path:     github.String(result.File),
 			Line:     github.Int(result.Line),
@@ -101,7 +101,7 @@ func (r *riskenService) PullRequestComment(ctx context.Context, pr *GithubPREven
 	return nil
 }
 
-func (r *riskenService) getAllIssueComments(ctx context.Context, owner, repo string, issueNumber int) ([]*github.IssueComment, error) {
+func (r *reviewService) getAllIssueComments(ctx context.Context, owner, repo string, issueNumber int) ([]*github.IssueComment, error) {
 	var allComments []*github.IssueComment
 	opts := &github.IssueListCommentsOptions{ListOptions: github.ListOptions{PerPage: 100}} // ページごとのアイテム数を設定
 
@@ -120,7 +120,7 @@ func (r *riskenService) getAllIssueComments(ctx context.Context, owner, repo str
 	return allComments, nil
 }
 
-func (r *riskenService) getAllPRComments(ctx context.Context, owner, repo string, prNumber int) ([]*github.PullRequestComment, error) {
+func (r *reviewService) getAllPRComments(ctx context.Context, owner, repo string, prNumber int) ([]*github.PullRequestComment, error) {
 	var allComments []*github.PullRequestComment
 	opts := &github.PullRequestListCommentsOptions{ListOptions: github.ListOptions{PerPage: 100}}
 	for {
@@ -154,4 +154,23 @@ func existsSimilarIssueComment(comments []*github.IssueComment, key string) bool
 		}
 	}
 	return false
+}
+
+const (
+	RISKEN_COMMENT_TEMPLATE = `
+
+#### RISKENで確認
+
+より詳細な情報や生成AIによる解説はRISKENコンソール上で確認できます。
+
+- %s`
+)
+
+func generatePRReviewComment(result *ScanResult) string {
+	reviewComment := result.ReviewComment
+	if result.RiskenURL != "" {
+		reviewComment += fmt.Sprintf(RISKEN_COMMENT_TEMPLATE, result.RiskenURL)
+	}
+	reviewComment += "\n\n_By RISKEN review_"
+	return reviewComment
 }
