@@ -106,7 +106,6 @@ func (r *reviewService) Run(ctx context.Context) error {
 			return err
 		}
 		r.logger.InfoContext(ctx, "Success PR comment")
-
 	}
 
 	if r.opt.ErrorFlag && len(scanResult) > 0 {

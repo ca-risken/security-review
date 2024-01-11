@@ -38,7 +38,7 @@ run-options: build
 		--rm \
 		--env-file=.env \
 		-v $(CURDIR):/tmp/workspace \
-		ssgca/risken-review:$(TAG) --no-pr-comment
+		ssgca/risken-review:$(TAG) --error --no-pr-comment
 
 .PHONY: login
 login:

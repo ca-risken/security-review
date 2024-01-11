@@ -48,11 +48,11 @@ jobs:
     risken_api_token: ${{ secrets.RISKEN_API_TOKEN }}
 ```
 
-| Pameters | Description | Examples |
-| ---- | ---- | ---- |
-| `risken_console_url` | RISKEN Console URL | https://console.your-env.com |
-| `risken_api_endpoint` | RISKEN API Endpoint | https://api.your-env.com |
-| `risken_api_token` | RISKEN API Token | xxxxx |
+| Pameters | Description | Required | Default | Examples |
+| ---- | ---- | ---- | ---- | ---- |
+| `risken_console_url` | RISKEN Console URL | `no` | | https://console.your-env.com |
+| `risken_api_endpoint` | RISKEN API Endpoint | `no` | | https://api.your-env.com |
+| `risken_api_token` | RISKEN API Token | `no` | | xxxxx |
 
 ## Other Options
 
@@ -63,31 +63,54 @@ jobs:
     options: '--no-pr-comment --error'
 ```
 
-| Pameters | Description | Examples |
-| ---- | ---- | ---- |
-| `--no-pr-comment` | If true, do not post PR comments (default: false) | |
-| `--error` | Exit 1 if there are finding (default: false) | |
+| Pameters | Description | Required | Default | Examples |
+| ---- | ---- | ---- | ---- | ---- |
+| `--no-pr-comment` | If true, do not post PR comments (default: false) | `no` | `false` | |
+| `--error` | Exit 1 if there are finding (default: false) | `no` | `false` | |
 
 ## Test on local
 
-### Generate ENV file
+### Command Line Usage
+
+```shell
+$ go run main.go --help
+risken-review command is a GitHub Custom Action to review pull request with Risken
+
+Usage:
+  risken-review [flags]
+
+Flags:
+      --error                        Exit 1 if there are findings (optional)
+      --github-event-path string     GitHub event path
+      --github-token string          GitHub token
+      --github-workspace string      GitHub workspace path
+  -h, --help                         help for risken-review
+      --no-pr-comment                If true, do not post PR comments (optional)
+      --risken-api-endpoint string   RISKEN API endpoint (optional)
+      --risken-api-token string      RISKEN API token for authentication (optional)
+      --risken-console-url string    RISKEN Console URL (optional)
+```
+
+### Use Docker
+
+#### Preparation
 
 ```shell
 $ cp .env.sample .env
 $ vi .env # fix your token
 ```
 
-### Use Docker
+#### Run docker
 
 ```shell
 $ make run
 ```
 
-### See your comment
+#### See your test comment
 
 https://github.com/ca-risken/security-review/pull/1
 
-## Push image
+## Push image for v1
 
 ```shell
 $ make push TAG=v1
