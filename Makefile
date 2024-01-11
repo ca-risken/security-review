@@ -9,6 +9,13 @@ help:
 	@echo "\n---------------- sub-command list ----------------"
 	@cat Makefile | grep -e '^\.PHONY: .*$$' | grep -v -e "all" -e "help" | sed -e 's/^\.PHONY: //g' | sed -e 's/^/- /g' | sort
 
+.PHONY: generate-mock
+generate-mock:
+	# for dir in $$(ls -d pkg/**); do \
+	# 	pushd $$dir && mockery --all && popd; \
+	# done
+	cd pkg && mockery --all
+
 .PHONY: build
 build:
 	docker build -t ssgca/risken-review:$(TAG) .
@@ -24,6 +31,14 @@ run: build
 		--env-file=.env \
 		-v $(CURDIR):/tmp/workspace \
 		ssgca/risken-review:$(TAG)
+
+.PHONY: run-options
+run-options: build
+	docker run \
+		--rm \
+		--env-file=.env \
+		-v $(CURDIR):/tmp/workspace \
+		ssgca/risken-review:$(TAG) --error --no-pr-comment
 
 .PHONY: login
 login:

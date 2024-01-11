@@ -12,7 +12,7 @@ import (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "risken-review --github-event-path <path> --github-token <token> --github-workspace <path>",
+	Use:   "risken-review",
 	Short: "risken-review command is a GitHub Custom Action to review pull request with Risken",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx, cancel := context.WithTimeout(context.Background(), 60*time.Minute)
@@ -33,10 +33,11 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&opt.GithubToken, "github-token", "", "GitHub token")
 	rootCmd.PersistentFlags().StringVar(&opt.GithubEventPath, "github-event-path", "", "GitHub event path")
 	rootCmd.PersistentFlags().StringVar(&opt.GithubWorkspace, "github-workspace", "", "GitHub workspace path")
-	rootCmd.PersistentFlags().BoolVar(&opt.ErrorFlag, "error", false, "Exit 1 if there are findings")
-	rootCmd.PersistentFlags().StringVar(&opt.RiskenConsoleURL, "risken-console-url", "", "RISKEN Console URL")
-	rootCmd.PersistentFlags().StringVar(&opt.RiskenApiEndpoint, "risken-api-endpoint", "", "RISKEN API endpoint")
-	rootCmd.PersistentFlags().StringVar(&opt.RiskenApiToken, "risken-api-token", "", "RISKEN API token for authentication")
+	rootCmd.PersistentFlags().StringVar(&opt.RiskenConsoleURL, "risken-console-url", "", "RISKEN Console URL (optional)")
+	rootCmd.PersistentFlags().StringVar(&opt.RiskenApiEndpoint, "risken-api-endpoint", "", "RISKEN API endpoint (optional)")
+	rootCmd.PersistentFlags().StringVar(&opt.RiskenApiToken, "risken-api-token", "", "RISKEN API token for authentication (optional)")
+	rootCmd.PersistentFlags().BoolVar(&opt.ErrorFlag, "error", false, "Exit 1 if there are findings (optional)")
+	rootCmd.PersistentFlags().BoolVar(&opt.NoPRComment, "no-pr-comment", false, "If true, do not post PR comments (optional)")
 
 	cobra.OnInitialize(initoptig)
 }

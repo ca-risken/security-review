@@ -1,4 +1,4 @@
-package review
+package scanner
 
 import (
 	"bytes"
@@ -24,7 +24,7 @@ func NewSemgrepScanner(logger *slog.Logger) Scanner {
 	}
 }
 
-func (s *SemgrepScanner) Scan(ctx context.Context, repo *github.Repository, sourceCodePath string, changeFiles []*github.CommitFile) ([]*ScanResult, error) {
+func (s *SemgrepScanner) Scan(ctx context.Context, repo *github.Repository, pr *github.PullRequest, sourceCodePath string, changeFiles []*github.CommitFile) ([]*ScanResult, error) {
 	var semgrepFindings []*codescan.SemgrepFinding
 	for _, file := range changeFiles {
 		targetPath := fmt.Sprintf("%s/%s", sourceCodePath, *file.Filename)
@@ -53,7 +53,7 @@ func (s *SemgrepScanner) Scan(ctx context.Context, repo *github.Repository, sour
 		}
 		semgrepFindings = append(semgrepFindings, findings...)
 	}
-	return generateScanResultFromSemgrepResults(repo, semgrepFindings), nil
+	return generateScanResultFromSemgrepResults(repo, *pr.Head.SHA, semgrepFindings), nil
 }
 
 func parseSemgrepResult(sourceCodePath, scanResult string, repo *github.Repository, changeFiles []*github.CommitFile) ([]*codescan.SemgrepFinding, error) {
@@ -120,7 +120,7 @@ func isSupportedResult(tech []string) bool {
 	return true
 }
 
-func generateScanResultFromSemgrepResults(repo *github.Repository, results []*codescan.SemgrepFinding) []*ScanResult {
+func generateScanResultFromSemgrepResults(repo *github.Repository, commit string, results []*codescan.SemgrepFinding) []*ScanResult {
 	var scanResults []*ScanResult
 	for _, r := range results {
 		scanResults = append(scanResults, &ScanResult{
@@ -129,15 +129,11 @@ func generateScanResultFromSemgrepResults(repo *github.Repository, results []*co
 			Line:          r.End.Line,
 			DiffHunk:      r.Extra.Lines,
 			ReviewComment: generateSemgrepReviewComment(r),
-			GitHubURL:     generateGitHubURLForSemgrep(*repo.HTMLURL, r),
+			GitHubURL:     r.GitHubURL,
 			ScanResult:    r,
 		})
 	}
 	return scanResults
-}
-
-func generateGitHubURLForSemgrep(repositoryURL string, f *codescan.SemgrepFinding) string {
-	return fmt.Sprintf("%s/blob/master/%s#L%d-L%d", repositoryURL, f.Path, f.Start.Line, f.End.Line)
 }
 
 const (
