@@ -1,4 +1,4 @@
-package review
+package scanner
 
 import (
 	"context"
@@ -21,7 +21,7 @@ func NewGitleaksScanner(logger *slog.Logger) Scanner {
 	}
 }
 
-func (s *GitleaksScanner) Scan(ctx context.Context, repo *github.Repository, sourceCodePath string, changeFiles []*github.CommitFile) ([]*ScanResult, error) {
+func (s *GitleaksScanner) Scan(ctx context.Context, repo *github.Repository, pr *github.PullRequest, sourceCodePath string, changeFiles []*github.CommitFile) ([]*ScanResult, error) {
 	d, err := detect.NewDetectorDefaultConfig()
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize detector: %w", err)
@@ -59,10 +59,6 @@ func generateScanResultFromGitleaksResults(repo *github.Repository, sourceCodePa
 		})
 	}
 	return scanResults
-}
-
-func generateGitHubURLForGitleaks(repositoryURL string, f *report.Finding) string {
-	return fmt.Sprintf("%s/blob/master/%s#L%d-L%d", repositoryURL, f.File, f.StartLine, f.EndLine)
 }
 
 const (

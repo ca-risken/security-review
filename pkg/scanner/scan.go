@@ -1,4 +1,4 @@
-package review
+package scanner
 
 import (
 	"context"
@@ -20,7 +20,7 @@ type ScanResult struct {
 }
 
 type Scanner interface {
-	Scan(ctx context.Context, repo *github.Repository, sourceCodePath string, changeFiles []*github.CommitFile) ([]*ScanResult, error)
+	Scan(ctx context.Context, repo *github.Repository, pr *github.PullRequest, sourceCodePath string, changeFiles []*github.CommitFile) ([]*ScanResult, error)
 }
 
 func isChangeLine(files []*github.CommitFile, fileName, line string) bool {
@@ -49,9 +49,12 @@ func isLineInDiff(file *github.CommitFile, line string) bool {
 }
 
 func removeDirPrefix(dir, path string) string {
-	return strings.ReplaceAll(path, dir+"/", "")
+	if strings.HasPrefix(path, dir+"/") {
+		return strings.TrimPrefix(path, dir+"/")
+	}
+	return path
 }
 
-func generateRiskenURL(riskenConsoleURL string, projectID uint32, findingID uint64) string {
+func GenerateRiskenURL(riskenConsoleURL string, projectID uint32, findingID uint64) string {
 	return fmt.Sprintf("%s/finding/finding/?from_score=0&status=0&project_id=%d&finding_id=%d", riskenConsoleURL, projectID, findingID)
 }

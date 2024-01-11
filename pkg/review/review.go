@@ -5,9 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/ca-risken/go-risken"
-	"github.com/google/go-github/v44/github"
-	"golang.org/x/oauth2"
+	"github.com/ca-risken/security-review/pkg/scanner"
 )
 
 type ReviewService interface {
@@ -26,21 +24,15 @@ type ReviewOption struct {
 
 type reviewService struct {
 	opt          *ReviewOption
-	githubClient *github.Client
-	riskenClient *risken.Client
+	githubClient GitHubClient
+	riskenClient RiskenClient
 	logger       *slog.Logger
 }
 
 func NewReviewService(ctx context.Context, opt *ReviewOption, logger *slog.Logger) ReviewService {
-	ts := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: opt.GithubToken},
-	)
-	tc := oauth2.NewClient(ctx, ts)
-	githubClient := github.NewClient(tc)
-
-	var riskenClient *risken.Client
+	var riskenClient RiskenClient
 	if opt.RiskenApiEndpoint != "" && opt.RiskenApiToken != "" {
-		riskenClient = risken.NewClient(opt.RiskenApiToken, risken.WithAPIEndpoint(opt.RiskenApiEndpoint))
+		riskenClient = NewRiskenClient(opt.RiskenApiToken, opt.RiskenApiEndpoint)
 		if opt.RiskenConsoleURL == "" {
 			logger.Info("RISKEN Console URL is not set. Use RISKEN API endpoint instead.")
 			opt.RiskenConsoleURL = opt.RiskenApiEndpoint
@@ -48,7 +40,7 @@ func NewReviewService(ctx context.Context, opt *ReviewOption, logger *slog.Logge
 	}
 	return &reviewService{
 		opt:          opt,
-		githubClient: githubClient,
+		githubClient: NewGitHubClient(ctx, opt.GithubToken),
 		riskenClient: riskenClient,
 		logger:       logger,
 	}
@@ -67,21 +59,21 @@ func (r *reviewService) Run(ctx context.Context) error {
 	}
 
 	// ソースコードの差分を取得
-	changeFiles, err := r.Diff(ctx, pr)
+	changeFiles, err := r.ListPRFiles(ctx, pr)
 	if err != nil {
 		return err
 	}
 
 	// スキャン
-	semgrep := NewSemgrepScanner(r.logger)
-	semgrepResults, err := semgrep.Scan(ctx, pr.Repository, r.opt.GithubWorkspace, changeFiles)
+	semgrep := scanner.NewSemgrepScanner(r.logger)
+	semgrepResults, err := semgrep.Scan(ctx, pr.Repository, pr.PullRequest, r.opt.GithubWorkspace, changeFiles)
 	if err != nil {
 		return err
 	}
 	r.logger.InfoContext(ctx, "Success semgrep scan", slog.Int("results", len(semgrepResults)))
 
-	gitleaks := NewGitleaksScanner(r.logger)
-	gitleaksResults, err := gitleaks.Scan(ctx, pr.Repository, r.opt.GithubWorkspace, changeFiles)
+	gitleaks := scanner.NewGitleaksScanner(r.logger)
+	gitleaksResults, err := gitleaks.Scan(ctx, pr.Repository, pr.PullRequest, r.opt.GithubWorkspace, changeFiles)
 	if err != nil {
 		return err
 	}
@@ -99,7 +91,7 @@ func (r *reviewService) Run(ctx context.Context) error {
 			if err != nil {
 				return fmt.Errorf("failed to put finding: %w", err)
 			}
-			scanResult[i].RiskenURL = generateRiskenURL(r.opt.RiskenConsoleURL, resp.Finding.ProjectId, resp.Finding.FindingId)
+			scanResult[i].RiskenURL = scanner.GenerateRiskenURL(r.opt.RiskenConsoleURL, resp.Finding.ProjectId, resp.Finding.FindingId)
 		}
 	} else {
 		r.logger.InfoContext(ctx, "Skip RISKEN integration")

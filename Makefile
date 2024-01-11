@@ -9,6 +9,13 @@ help:
 	@echo "\n---------------- sub-command list ----------------"
 	@cat Makefile | grep -e '^\.PHONY: .*$$' | grep -v -e "all" -e "help" | sed -e 's/^\.PHONY: //g' | sed -e 's/^/- /g' | sort
 
+.PHONY: generate-mock
+generate-mock:
+	# for dir in $$(ls -d pkg/**); do \
+	# 	pushd $$dir && mockery --all && popd; \
+	# done
+	cd pkg && mockery --all
+
 .PHONY: build
 build:
 	docker build -t ssgca/risken-review:$(TAG) .
