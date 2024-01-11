@@ -61,7 +61,14 @@ func (r *reviewService) ListPRFiles(ctx context.Context, pr *GithubPREvent) ([]*
 		if err != nil {
 			return nil, err
 		}
-		changeFiles = append(changeFiles, files...)
+		for _, f := range files {
+			// https://docs.github.com/ja/rest/pulls/pulls?apiVersion=2022-11-28#list-pull-requests-files
+			if f.Status != nil && *f.Status == *github.String("removed") {
+				// Can not scan removed files
+				continue
+			}
+			changeFiles = append(changeFiles, f)
+		}
 		if resp.NextPage == 0 {
 			break
 		}
