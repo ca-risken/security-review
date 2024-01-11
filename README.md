@@ -60,12 +60,13 @@ jobs:
 - uses: ca-risken/security-review@v1
   with:
     github_token: ${{ secrets.GITHUB_TOKEN }}
-    options: '--error'
+    options: '--no-pr-comment --error'
 ```
 
 | Pameters | Description | Examples |
 | ---- | ---- | ---- |
-| `--error` | Exit 1 if there are finding (default: false) | --error |
+| `--no-pr-comment` | If true, do not post PR comments (default: false) | |
+| `--error` | Exit 1 if there are finding (default: false) | |
 
 ## Test on local
 

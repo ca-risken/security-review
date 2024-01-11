@@ -32,6 +32,14 @@ run: build
 		-v $(CURDIR):/tmp/workspace \
 		ssgca/risken-review:$(TAG)
 
+.PHONY: run-options
+run-options: build
+	docker run \
+		--rm \
+		--env-file=.env \
+		-v $(CURDIR):/tmp/workspace \
+		ssgca/risken-review:$(TAG) --no-pr-comment
+
 .PHONY: login
 login:
 	docker login

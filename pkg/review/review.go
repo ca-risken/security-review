@@ -16,10 +16,11 @@ type ReviewOption struct {
 	GithubToken       string
 	GithubEventPath   string
 	GithubWorkspace   string
-	ErrorFlag         bool
 	RiskenConsoleURL  string
 	RiskenApiEndpoint string
 	RiskenApiToken    string
+	ErrorFlag         bool
+	NoPRComment       bool
 }
 
 type reviewService struct {
@@ -98,10 +99,15 @@ func (r *reviewService) Run(ctx context.Context) error {
 	}
 
 	// PRコメント
-	if err := r.PullRequestComment(ctx, pr, scanResult); err != nil {
-		return err
+	if r.opt.NoPRComment {
+		r.logger.InfoContext(ctx, "Skip PR comment")
+	} else {
+		if err := r.PullRequestComment(ctx, pr, scanResult); err != nil {
+			return err
+		}
+		r.logger.InfoContext(ctx, "Success PR comment")
+
 	}
-	r.logger.InfoContext(ctx, "Success PR comment")
 
 	if r.opt.ErrorFlag && len(scanResult) > 0 {
 		return fmt.Errorf("there are findings(%d)", len(scanResult))
