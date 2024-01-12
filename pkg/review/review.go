@@ -82,7 +82,7 @@ func (r *reviewService) Run(ctx context.Context) error {
 	scanResult := append(semgrepResults, gitleaksResults...)
 
 	// RISKNEN APIを叩く(optional)
-	if r.riskenClient != nil {
+	if r.riskenClient != nil && len(scanResult) > 0 {
 		projectID, err := r.getProjectID(ctx)
 		if err != nil {
 			return fmt.Errorf("failed to get project ID: %w", err)
