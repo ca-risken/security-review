@@ -8,7 +8,6 @@ import (
 	"log"
 	"log/slog"
 	"os/exec"
-	"strings"
 
 	"github.com/ca-risken/code/pkg/codescan"
 	"github.com/google/go-github/v44/github"
@@ -47,7 +46,7 @@ func (s *SemgrepScanner) Scan(ctx context.Context, repo *github.Repository, pr *
 		if err != nil {
 			return nil, fmt.Errorf("failed to execute semgrep: targetPath=%s, err=%w, stderr=%+v", targetPath, err, stderr.String())
 		}
-		findings, err := parseSemgrepResult(sourceCodePath, stdout.String(), repo, changeFiles)
+		findings, err := parseSemgrepResult(sourceCodePath, stdout.String(), repo, pr, changeFiles)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse semgrep: targetPath=%s, err=%w", targetPath, err)
 		}
@@ -56,15 +55,15 @@ func (s *SemgrepScanner) Scan(ctx context.Context, repo *github.Repository, pr *
 	return generateScanResultFromSemgrepResults(repo, *pr.Head.SHA, semgrepFindings), nil
 }
 
-func parseSemgrepResult(sourceCodePath, scanResult string, repo *github.Repository, changeFiles []*github.CommitFile) ([]*codescan.SemgrepFinding, error) {
-	results, err := codescan.ParseSemgrepResult(sourceCodePath, scanResult, *repo.FullName, *repo.HTMLURL)
+func parseSemgrepResult(sourceCodePath, scanResult string, repo *github.Repository, pr *github.PullRequest, changeFiles []*github.CommitFile) ([]*codescan.SemgrepFinding, error) {
+	results, err := codescan.ParseSemgrepResult(sourceCodePath, scanResult, *repo.FullName, *pr.Head.SHA, *repo.HTMLURL)
 	if err != nil {
 		return nil, err
 	}
 
 	findings := []*codescan.SemgrepFinding{}
 	for _, r := range results {
-		fileName := strings.ReplaceAll(r.Path, sourceCodePath+"/", "") // remove dir prefix
+		fileName := removeDirPrefix(sourceCodePath, r.Path)
 		if !isChangeLine(changeFiles, fileName, r.Extra.Lines) {
 			continue
 		}
