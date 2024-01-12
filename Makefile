@@ -11,7 +11,6 @@ help:
 
 .PHONY: install
 install:
-	go mod download
 	go install golang.org/x/tools/cmd/deadcode@v0.17.0
 	go install github.com/vektra/mockery/v2@v2.36.0
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.55.2
