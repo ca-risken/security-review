@@ -1,8 +1,6 @@
 name: Security Code Review on PR
 on:
   pull_request:
-    branches:
-      - main
     types: [opened, synchronize]
 jobs:
   review:
