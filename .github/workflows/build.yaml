@@ -19,7 +19,7 @@ jobs:
         key: ${{ runner.os }}-buildx-${{ github.sha }}
         restore-keys: |
           ${{ runner.os }}-buildx-
-    - name: Build and push
+    - name: Docker Build
       uses: docker/build-push-action@v5
       with:
         context: .
@@ -32,5 +32,3 @@ jobs:
       run: |
         rm -rf /tmp/.buildx-cache
         mv /tmp/.buildx-cache-new /tmp/.buildx-cache
-    - name: Docker build
-      run: make build
