@@ -9,12 +9,24 @@ help:
 	@echo "\n---------------- sub-command list ----------------"
 	@cat Makefile | grep -e '^\.PHONY: .*$$' | grep -v -e "all" -e "help" | sed -e 's/^\.PHONY: //g' | sed -e 's/^/- /g' | sort
 
+.PHONY: install
+install:
+	go mod download
+	go install golang.org/x/tools/cmd/deadcode@v0.17.0
+	go install github.com/vektra/mockery/v2@v2.36.0
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.55.2
+
 .PHONY: generate-mock
 generate-mock:
 	# for dir in $$(ls -d pkg/**); do \
 	# 	pushd $$dir && mockery --all && popd; \
 	# done
 	cd pkg && mockery --all
+
+.PHONY: lint
+lint:
+	deadcode ./...
+	GO111MODULE=on GOFLAGS=-buildvcs=false golangci-lint run --timeout 5m
 
 .PHONY: build
 build:

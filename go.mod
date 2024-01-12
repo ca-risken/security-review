@@ -3,7 +3,7 @@ module github.com/ca-risken/security-review
 go 1.21.3
 
 require (
-	github.com/ca-risken/code v0.10.1-0.20240109091816-bb60a96c8645
+	github.com/ca-risken/code v0.10.1-0.20240112050020-2150095ae2a2
 	github.com/ca-risken/core v0.10.1-0.20231207084139-adc99d9a725b
 	github.com/ca-risken/datasource-api v0.10.0
 	github.com/ca-risken/go-risken v0.0.0-20240110062719-4afdbe2ebcba
