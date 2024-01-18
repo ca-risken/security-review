@@ -101,8 +101,8 @@ github.com/aws/aws-sdk-go-v2/service/sts v1.18.9 h1:Qf1aWwnsNkyAoqDqmdM3nHwN78XQ
 github.com/aws/aws-sdk-go-v2/service/sts v1.18.9/go.mod h1:yyW88BEPXA2fGFyI2KCcZC3dNpiT0CZAHaF+i656/tQ=
 github.com/aws/smithy-go v1.13.5 h1:hgz0X/DX0dGqTYpGALqXJoRKRj5oQ7150i5FdTePzO8=
 github.com/aws/smithy-go v1.13.5/go.mod h1:Tg+OJXh4MB2R/uN61Ko2f6hTZwB/ZYGOtib8J3gBHzA=
-github.com/ca-risken/code v0.10.1-0.20240112050020-2150095ae2a2 h1:WcBnVNH0UaQNw83XG1x5KHoD+XOz83GtWfijixBPVmI=
-github.com/ca-risken/code v0.10.1-0.20240112050020-2150095ae2a2/go.mod h1:vWle+3qUKgrAwipQJH2XAYUW5FkT+phNV062IgWANys=
+github.com/ca-risken/code v0.10.1-0.20240118081550-aa7a9e7b176c h1:SggxC2SX/Oc0ft466SkYv+jyEXUL8McyEhxMoDo64cE=
+github.com/ca-risken/code v0.10.1-0.20240118081550-aa7a9e7b176c/go.mod h1:vWle+3qUKgrAwipQJH2XAYUW5FkT+phNV062IgWANys=
 github.com/ca-risken/common/pkg/logging v0.0.0-20221119073224-9db027bda6f8 h1:U92BkR3p4XiKRo+m/DgMN1O1gUCm4DX3i00tgmFLiU4=
 github.com/ca-risken/common/pkg/logging v0.0.0-20221119073224-9db027bda6f8/go.mod h1:lUCE46TDzshDpI8Et+U806+ycG3LhMuBLrhemEJdSe0=
 github.com/ca-risken/common/pkg/sqs v0.0.0-20221119073224-9db027bda6f8 h1:qkGWlFgaOYeqPhvfn+5FMGfoj2ut02TDpYblwatvB1I=
