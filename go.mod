@@ -1,6 +1,6 @@
 module github.com/ca-risken/security-review
 
-go 1.21.3
+go 1.25.5
 
 require (
 	github.com/ca-risken/code v0.10.1-0.20240118081550-aa7a9e7b176c

@@ -30,7 +30,11 @@ func (r *reviewService) GetGithubPREvent() (*GithubPREvent, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to open file: path=%s, err=%w", r.opt.GithubEventPath, err)
 	}
-	defer file.Close()
+	defer func() {
+		if closeErr := file.Close(); closeErr != nil {
+			r.logger.Warn("failed to close github event file", slog.String("path", r.opt.GithubEventPath), slog.String("err", closeErr.Error()))
+		}
+	}()
 
 	var event GithubPREvent
 	decoder := json.NewDecoder(file)

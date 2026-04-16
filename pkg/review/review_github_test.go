@@ -40,18 +40,25 @@ func TestGetGithubPREvent(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			// Create a temp file and write the content to it.
 			tmpFile, err := os.CreateTemp("", "test")
 			if err != nil {
 				t.Fatalf("Failed to create temp file: %s", err)
 			}
-			defer os.Remove(tmpFile.Name())
+			t.Cleanup(func() {
+				if removeErr := os.Remove(tmpFile.Name()); removeErr != nil {
+					t.Errorf("Failed to remove temp file: %s", removeErr)
+				}
+			})
 			_, err = tmpFile.Write([]byte(tt.content))
 			if err != nil {
 				t.Fatalf("Failed to write to temp file: %s", err)
 			}
-			tmpFile.Close()
+			if err := tmpFile.Close(); err != nil {
+				t.Fatalf("Failed to close temp file: %s", err)
+			}
 
 			r := reviewService{
 				opt: &ReviewOption{GithubEventPath: tmpFile.Name()},

@@ -1,4 +1,7 @@
 TAG ?= latest
+DEADCODE_VERSION ?= v0.43.0
+GOLANGCI_LINT_VERSION ?= v2.8.0
+GO_BIN_DIR ?= $(or $(shell go env GOBIN),$(shell go env GOPATH)/bin)
 
 .PHONY: all
 all: help
@@ -11,9 +14,9 @@ help:
 
 .PHONY: install
 install:
-	go install golang.org/x/tools/cmd/deadcode@v0.17.0
-	go install github.com/vektra/mockery/v2@v2.36.0
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.55.2
+	GOBIN=$(GO_BIN_DIR) go install golang.org/x/tools/cmd/deadcode@$(DEADCODE_VERSION)
+	GOBIN=$(GO_BIN_DIR) go install github.com/vektra/mockery/v2@v2.36.0
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(GO_BIN_DIR) $(GOLANGCI_LINT_VERSION)
 
 .PHONY: generate-mock
 generate-mock:
@@ -24,7 +27,7 @@ generate-mock:
 
 .PHONY: lint
 lint:
-	deadcode ./...
+	go run golang.org/x/tools/cmd/deadcode@$(DEADCODE_VERSION) ./...
 	GO111MODULE=on GOFLAGS=-buildvcs=false golangci-lint run --timeout 5m
 
 .PHONY: build
