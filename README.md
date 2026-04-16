@@ -23,13 +23,13 @@ on:
     types: [opened, synchronize]
 jobs:
   review:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     permissions:
       contents: read
       pull-requests: write # risken review needs this permission to create a comment on the PR
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: ca-risken/security-review@v1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
