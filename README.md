@@ -68,6 +68,60 @@ jobs:
 | `--no-pr-comment` | If true, do not post PR comments (default: false) | `no` | `false` | |
 | `--error` | Exit 1 if there are finding (default: false) | `no` | `false` | |
 
+## Ignore Semgrep findings
+
+If you want to exclude specific files or folders from Semgrep scans, create a `.semgrepignore` file in the repository root.
+
+```text
+# .semgrepignore
+vendor/
+generated/
+path/to/file.go
+```
+
+If you want to ignore only a specific code block, add a `nosemgrep` comment.
+
+```go
+// nosemgrep
+cmd := exec.Command(userInput) // ignored by Semgrep
+_ = cmd.Run()
+```
+
+You can also ignore a specific rule only.
+
+```go
+// nosemgrep: go.lang.security.audit.dangerous-exec-command.dangerous-exec-command
+cmd := exec.Command(userInput) // ignored only for this rule
+_ = cmd.Run()
+```
+
+Example:
+
+```go
+func run(userInput string) error {
+	// Ignore all Semgrep rules for this line
+	// nosemgrep
+	cmd1 := exec.Command(userInput)
+	if err := cmd1.Run(); err != nil {
+		return err
+	}
+
+	// Ignore only the dangerous-exec-command rule
+	// nosemgrep: go.lang.security.audit.dangerous-exec-command.dangerous-exec-command
+	cmd2 := exec.Command(userInput)
+	if err := cmd2.Run(); err != nil {
+		return err
+	}
+
+	return nil
+}
+```
+
+See the official Semgrep documentation for details about `.semgrepignore` syntax and inline ignore comments:
+
+- https://semgrep.dev/docs/ignoring-files-folders-code
+- https://semgrep.dev/docs/semgrepignore-v2-reference
+
 ## Test on local
 
 ### Command Line Usage
@@ -115,4 +169,3 @@ https://github.com/ca-risken/security-review/pull/1
 ```shell
 $ make push TAG=v1
 ```
-
