@@ -1,6 +1,11 @@
 package scanner
 
 import (
+	"context"
+	"io"
+	"log/slog"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/ca-risken/code/pkg/gitleaks"
@@ -85,10 +90,66 @@ func TestGenerateScanResultFromGitleaksResults(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			got := generateScanResultFromGitleaksResults(tt.args.repo, tt.args.sourceCodePath, tt.args.results)
 			if diff := cmp.Diff(tt.want, got); diff != "" {
 				t.Errorf("generateScanResultFromGitleaksResults() mismatch (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestGitleaksScan(t *testing.T) {
+	t.Parallel()
+
+	repo := &github.Repository{
+		HTMLURL:  github.String("https://github.com/owner/repo"),
+		FullName: github.String("owner/repo"),
+	}
+	pr := &github.PullRequest{}
+
+	tests := []struct {
+		name        string
+		fileName    string
+		content     []byte
+		patch       string
+		wantResults int
+	}{
+		{
+			name:        "Skip empty file",
+			fileName:    ".gitkeep",
+			content:     []byte{},
+			patch:       "",
+			wantResults: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			tmpDir := t.TempDir()
+			targetPath := filepath.Join(tmpDir, tt.fileName)
+			if err := os.WriteFile(targetPath, tt.content, 0o644); err != nil {
+				t.Fatalf("failed to create test file: %v", err)
+			}
+
+			scanner := NewGitleaksScanner(slog.New(slog.NewTextHandler(io.Discard, nil)))
+			changeFiles := []*github.CommitFile{
+				{
+					Filename: github.String(tt.fileName),
+					Patch:    github.String(tt.patch),
+				},
+			}
+
+			got, err := scanner.Scan(context.Background(), repo, pr, tmpDir, changeFiles)
+			if err != nil {
+				t.Fatalf("Scan() error = %v", err)
+			}
+			if len(got) != tt.wantResults {
+				t.Fatalf("Scan() results = %d, want %d", len(got), tt.wantResults)
 			}
 		})
 	}
