@@ -7,18 +7,18 @@ on:
       - 'go.*'
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-go@v3
+    - uses: actions/setup-go@v6
       with:
-        go-version: 1.21
+        go-version: 1.25.5
     - name: GolangCI-Lint
-      uses: golangci/golangci-lint-action@v3
+      uses: golangci/golangci-lint-action@v9
       with:
-        version: v1.55.2
+        version: v2.8.0
         args: --timeout 5m
     - name: Deadcode
       run: |
-        go install golang.org/x/tools/cmd/deadcode@v0.17.0
+        go install golang.org/x/tools/cmd/deadcode@v0.43.0
         deadcode ./...

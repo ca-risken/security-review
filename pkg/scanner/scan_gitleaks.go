@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"os"
 
 	"github.com/ca-risken/code/pkg/gitleaks"
 	"github.com/google/go-github/v44/github"
@@ -30,6 +31,14 @@ func (s *GitleaksScanner) Scan(ctx context.Context, repo *github.Repository, pr 
 	gitleaksFindings := []report.Finding{}
 	for _, file := range changeFiles {
 		targetPath := fmt.Sprintf("%s/%s", sourceCodePath, *file.Filename)
+		info, err := os.Stat(targetPath)
+		if err != nil {
+			return nil, fmt.Errorf("failed to stat %s: %w", targetPath, err)
+		}
+		if info.Size() == 0 {
+			s.logger.InfoContext(ctx, "Skip gitleaks scan for empty file", slog.String("file", targetPath))
+			continue
+		}
 		findings, err := d.DetectFiles(targetPath)
 		if err != nil {
 			return nil, fmt.Errorf("failed to detect %s: %w", targetPath, err)

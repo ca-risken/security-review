@@ -66,7 +66,7 @@ func (r *reviewService) getPutRecommendRequest(ctx context.Context, projectID ui
 			scanResult.Result.RuleDescription,
 			scanResult.Result.Repo,
 			scanResult.Result.File,
-			*scanResult.RepositoryMetadata.Visibility,
+			*scanResult.Visibility,
 			scanResult.Result.URL,
 			scanResult.Result.Author,
 			scanResult.Result.Email,
