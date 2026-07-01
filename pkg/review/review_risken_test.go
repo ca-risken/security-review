@@ -260,3 +260,33 @@ func TestPutFinding(t *testing.T) {
 		})
 	}
 }
+
+func TestSemgrepSeverityScore(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name     string
+		severity string
+		want     float32
+	}{
+		{name: "legacy error", severity: "ERROR", want: 0.6},
+		{name: "legacy warning", severity: "WARNING", want: 0.3},
+		{name: "legacy info", severity: "INFO", want: 0.1},
+		{name: "modern high", severity: "HIGH", want: 0.6},
+		{name: "modern medium", severity: "MEDIUM", want: 0.3},
+		{name: "modern low", severity: "LOW", want: 0.1},
+		{name: "lowercase medium", severity: "medium", want: 0.3},
+		{name: "unknown", severity: "UNKNOWN", want: 0.0},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			got := semgrepSeverityScore(tt.severity)
+			if got != tt.want {
+				t.Fatalf("semgrepSeverityScore() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
