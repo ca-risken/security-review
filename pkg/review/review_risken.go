@@ -2,7 +2,9 @@ package review
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/ca-risken/code/pkg/codescan"
 	"github.com/ca-risken/code/pkg/gitleaks"
@@ -23,7 +25,7 @@ func (r *reviewService) getPutFindingRequest(ctx context.Context, projectID uint
 	var putReq *finding.PutFindingRequest
 	switch scanResult := s.ScanResult.(type) {
 	case *codescan.SemgrepFinding:
-		req, err := codescan.GeneratePutFindingRequest(projectID, scanResult)
+		req, err := generateSemgrepPutFindingRequest(projectID, scanResult)
 		if err != nil {
 			return nil, err
 		}
@@ -38,6 +40,39 @@ func (r *reviewService) getPutFindingRequest(ctx context.Context, projectID uint
 		return nil, fmt.Errorf("unknown scan result type: %T", scanResult)
 	}
 	return putReq, nil
+}
+
+func generateSemgrepPutFindingRequest(projectID uint32, f *codescan.SemgrepFinding) (*finding.PutFindingRequest, error) {
+	buf, err := json.Marshal(f)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal semgrep finding: project_id=%d, repository=%s, err=%w", projectID, f.Repository, err)
+	}
+	return &finding.PutFindingRequest{
+		ProjectId: projectID,
+		Finding: &finding.FindingForUpsert{
+			Description:      fmt.Sprintf("Detect source code finding (%s)", f.CheckID),
+			DataSource:       message.CodeScanDataSource,
+			DataSourceId:     codescan.GenerateDataSourceIDForSemgrep(f),
+			ResourceName:     f.Repository,
+			ProjectId:        projectID,
+			OriginalScore:    semgrepSeverityScore(f.Extra.Severity),
+			OriginalMaxScore: 1.0,
+			Data:             string(buf),
+		},
+	}, nil
+}
+
+func semgrepSeverityScore(severity string) float32 {
+	switch strings.ToUpper(severity) {
+	case "ERROR", "HIGH", "CRITICAL":
+		return 0.6
+	case "WARNING", "MEDIUM":
+		return 0.3
+	case "INFO", "LOW":
+		return 0.1
+	default:
+		return 0.0
+	}
 }
 
 func (r *reviewService) getPutRecommendRequest(ctx context.Context, projectID uint32, findingID uint64, s *scanner.ScanResult) (*finding.PutRecommendRequest, error) {
